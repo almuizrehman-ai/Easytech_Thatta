@@ -1,0 +1,905 @@
+/* ============================================================
+   EASYTECH THATTA — Components (Phase 2)
+   Load order: main.css -> design-system.css -> components.css
+   Only add styles here that are NOT covered by the two above.
+   ============================================================ */
+
+/* ---------- 1. APP CARD (reusable component) ---------- */
+.app-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition), transform var(--transition);
+    overflow: hidden;
+}
+
+.app-card:not(.app-card-flat):hover {
+    box-shadow: var(--shadow-md);
+}
+
+.app-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+.app-card-header-left {
+    min-width: 0;
+    flex: 1;
+}
+
+.app-card-title {
+    font-size: var(--fs-15);
+    font-weight: var(--fw-bold);
+    color: var(--navy-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    line-height: 1.3;
+}
+
+.app-card-title i {
+    color: var(--accent);
+    font-size: var(--fs-16);
+}
+
+.app-card-subtitle {
+    font-size: var(--fs-12);
+    color: var(--text-secondary);
+    margin: var(--sp-1) 0 0;
+    line-height: 1.4;
+}
+
+.app-card-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+}
+
+.app-card-body {
+    padding: var(--sp-5);
+}
+
+.app-card-footer {
+    padding: var(--sp-3) var(--sp-5);
+    border-top: 1px solid var(--border);
+    background: var(--bg-muted-soft);
+    font-size: var(--fs-12);
+    color: var(--text-secondary);
+}
+
+/* Card variants — accent top border */
+.app-card-primary { border-top: 3px solid var(--accent); }
+.app-card-success { border-top: 3px solid var(--success); }
+.app-card-warning { border-top: 3px solid var(--warning); }
+.app-card-danger  { border-top: 3px solid var(--danger); }
+
+/* Flat card (no hover) */
+.app-card-flat {
+    box-shadow: var(--shadow-xs);
+}
+
+.app-card-flat:hover {
+    box-shadow: var(--shadow-xs);
+    transform: none;
+}
+
+/* Compact card variant */
+.app-card-compact .app-card-body {
+    padding: var(--sp-3) var(--sp-4);
+}
+
+.app-card-compact .app-card-header {
+    padding: var(--sp-3) var(--sp-4);
+}
+
+/* ---------- 2. STAT / KPI CARD VARIANTS ---------- */
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--sp-4);
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--navy-600));
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: var(--sp-3);
+    flex-shrink: 0;
+}
+
+.stat-card-icon.bg-soft-primary { background: var(--accent-soft); color: var(--accent); }
+.stat-card-icon.bg-soft-success { background: var(--bg-success-soft); color: var(--success); }
+.stat-card-icon.bg-soft-warning { background: var(--bg-warning-soft); color: var(--warning); }
+.stat-card-icon.bg-soft-danger  { background: var(--bg-danger-soft); color: var(--danger); }
+.stat-card-icon.bg-soft-info    { background: var(--bg-info-soft); color: var(--info); }
+
+.stat-card-value {
+    font-size: var(--fs-24);
+    font-weight: var(--fw-extrabold);
+    color: var(--navy-900);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.stat-card-label {
+    font-size: var(--fs-11);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-2);
+}
+
+.stat-card-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: var(--fs-11);
+    font-weight: var(--fw-semibold);
+    margin-top: var(--sp-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.stat-card-trend.trend-up {
+    background: var(--bg-success-soft);
+    color: #047857;
+}
+
+.stat-card-trend.trend-down {
+    background: var(--bg-danger-soft);
+    color: #b91c1c;
+}
+
+.stat-card-trend.trend-neutral {
+    background: var(--bg-muted-soft);
+    color: var(--text-secondary);
+}
+
+/* ---------- 3. FILTER BAR (report pages) ---------- */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--sp-4);
+}
+
+.filter-bar .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-width: 140px;
+}
+
+.filter-bar .filter-label {
+    font-size: var(--fs-11);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.filter-bar .form-control,
+.filter-bar .form-select {
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    font-size: var(--fs-13);
+    padding: var(--sp-1) var(--sp-2);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+    outline: none;
+}
+
+.filter-bar .filter-actions {
+    display: flex;
+    gap: var(--sp-2);
+    margin-left: auto;
+}
+
+/* ---------- 4. BADGE GROUPS (status filters) ---------- */
+.badge-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+}
+
+.badge-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    font-size: var(--fs-12);
+    font-weight: var(--fw-semibold);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    line-height: 1.2;
+}
+
+.badge-tab:hover {
+    border-color: var(--accent-ring);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.badge-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.badge-tab .badge-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-weight: var(--fw-bold);
+}
+
+.badge-tab:not(.active) .badge-count {
+    background: var(--bg-muted-soft);
+    color: var(--text-secondary);
+}
+
+/* ---------- 5. CHART CONTAINERS (Phase 7 ready) ---------- */
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    padding: var(--sp-2) 0;
+}
+
+.chart-container-sm { min-height: 200px; }
+.chart-container-lg { min-height: 360px; }
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: var(--sp-2);
+    min-height: 280px;
+    background: var(--bg-muted-soft);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    text-align: center;
+    padding: var(--sp-4);
+}
+
+.chart-placeholder i {
+    font-size: 32px;
+    opacity: 0.6;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    font-size: var(--fs-12);
+    color: var(--text-secondary);
+}
+
+.chart-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-legend .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ---------- 6. AVATAR SYSTEM ---------- */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-bold);
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--accent), var(--navy-600));
+    flex-shrink: 0;
+    overflow: hidden;
+    line-height: 1;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.avatar-xs { width: 24px; height: 24px; font-size: 10px; }
+.avatar-sm { width: 32px; height: 32px; font-size: 12px; }
+.avatar-md { width: 40px; height: 40px; font-size: 15px; }
+.avatar-lg { width: 56px; height: 56px; font-size: 20px; }
+.avatar-xl { width: 80px; height: 80px; font-size: 28px; }
+
+.avatar-circle { border-radius: 50%; }
+
+.avatar-group {
+    display: inline-flex;
+}
+
+.avatar-group .avatar {
+    border: 2px solid var(--bg-card);
+    margin-left: -8px;
+}
+
+.avatar-group .avatar:first-child {
+    margin-left: 0;
+}
+
+/* ---------- 7. BUTTON VARIANTS ---------- */
+.btn-soft-primary {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid transparent;
+    font-weight: var(--fw-semibold);
+    transition: all var(--transition-fast);
+}
+
+.btn-soft-primary:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+.btn-soft-success {
+    background: var(--bg-success-soft);
+    color: #047857;
+    border: 1px solid transparent;
+}
+
+.btn-soft-success:hover {
+    background: var(--success);
+    color: #ffffff;
+}
+
+.btn-soft-danger {
+    background: var(--bg-danger-soft);
+    color: #b91c1c;
+    border: 1px solid transparent;
+}
+
+.btn-soft-danger:hover {
+    background: var(--danger);
+    color: #ffffff;
+}
+
+.btn-soft-warning {
+    background: var(--bg-warning-soft);
+    color: #b45309;
+    border: 1px solid transparent;
+}
+
+.btn-soft-warning:hover {
+    background: var(--warning);
+    color: #ffffff;
+}
+
+/* Ghost button (no background until hover) */
+.btn-ghost {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-muted-soft);
+    color: var(--accent);
+    border-color: var(--border);
+}
+
+/* Icon-only button used in tables / toolbars */
+.btn-icon-sm {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon-sm:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent-ring);
+}
+
+.btn-icon-sm.btn-icon-danger:hover {
+    background: var(--bg-danger-soft);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Button size mini (inside tables) */
+.btn-xs {
+    padding: 3px 9px;
+    font-size: var(--fs-11);
+    line-height: 1.3;
+    border-radius: var(--radius-xs);
+    font-weight: var(--fw-semibold);
+}
+
+/* ---------- 8. ROW ACTION GROUP ---------- */
+.row-actions {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.row-actions .dropdown-toggle::after {
+    display: none;
+}
+
+.row-actions .btn-more {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: var(--radius-xs);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-actions .btn-more:hover {
+    background: var(--bg-muted-soft);
+    color: var(--accent);
+}
+
+/* ---------- 9. TAB NAVIGATION ---------- */
+.app-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--sp-4);
+    padding: 0;
+    list-style: none;
+}
+
+.app-tabs .tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-13);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.app-tabs .tab-item:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent-ring);
+}
+
+.app-tabs .tab-item.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: var(--fw-bold);
+}
+
+.app-tabs .tab-item .tab-badge {
+    background: var(--bg-muted-soft);
+    color: var(--text-secondary);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: var(--fw-bold);
+}
+
+.app-tabs .tab-item.active .tab-badge {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* ---------- 10. INFO CALLOUTS ---------- */
+.callout {
+    display: flex;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid;
+    font-size: var(--fs-13);
+    line-height: 1.55;
+    margin-bottom: var(--sp-4);
+}
+
+.callout-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.callout-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.callout-title {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-13);
+    margin-bottom: var(--sp-1);
+    display: block;
+}
+
+.callout-info {
+    background: var(--bg-info-soft);
+    border-left-color: var(--info);
+    color: #1e40af;
+}
+
+.callout-success {
+    background: var(--bg-success-soft);
+    border-left-color: var(--success);
+    color: #047857;
+}
+
+.callout-warning {
+    background: var(--bg-warning-soft);
+    border-left-color: var(--warning);
+    color: #b45309;
+}
+
+.callout-danger {
+    background: var(--bg-danger-soft);
+    border-left-color: var(--danger);
+    color: #b91c1c;
+}
+
+/* ---------- 11. SECTION HEADINGS INSIDE CARDS ---------- */
+.section-heading {
+    font-size: var(--fs-11);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-3);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border);
+}
+
+/* ---------- 12. TIMELINE (audit log Phase 8) ---------- */
+.timeline {
+    position: relative;
+    padding-left: var(--sp-6);
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--border);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: var(--sp-4);
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: calc(-1 * var(--sp-6) + 5px);
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--accent);
+}
+
+.timeline-item.timeline-success .timeline-marker { border-color: var(--success); }
+.timeline-item.timeline-warning .timeline-marker { border-color: var(--warning); }
+.timeline-item.timeline-danger  .timeline-marker { border-color: var(--danger); }
+
+.timeline-content {
+    font-size: var(--fs-13);
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.timeline-meta {
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ---------- 13. PROGRESS / BAR INDICATORS ---------- */
+.mini-progress {
+    height: 6px;
+    background: var(--bg-muted-soft);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mini-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--navy-600));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.mini-progress .progress-fill.fill-success { background: var(--success); }
+.mini-progress .progress-fill.fill-warning { background: var(--warning); }
+.mini-progress .progress-fill.fill-danger  { background: var(--danger); }
+
+/* ---------- 14. DROPDOWN ENHANCEMENTS ---------- */
+.dropdown-menu {
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-sm);
+    padding: 5px;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    font-size: var(--fs-13);
+    border-radius: var(--radius-xs);
+    color: var(--text-primary);
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdown-item i {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--bg-muted-soft);
+    color: var(--accent);
+}
+
+.dropdown-item.text-danger:hover {
+    background: var(--bg-danger-soft);
+    color: var(--danger);
+}
+
+/* ---------- 15. DIVIDER VARIANTS ---------- */
+.divider-dashed {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: var(--sp-4) 0;
+}
+
+.divider-vertical {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    display: inline-block;
+    margin: 0 var(--sp-2);
+    vertical-align: middle;
+}
+
+.divider-label {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin: var(--sp-4) 0;
+    font-size: var(--fs-11);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: var(--fw-bold);
+}
+
+.divider-label::before,
+.divider-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ---------- 16. KEY-VALUE ROWS (profile views) ---------- */
+.kv-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--fs-13);
+}
+
+.kv-row:last-child {
+    border-bottom: none;
+}
+
+.kv-label {
+    flex: 0 0 40%;
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+    font-size: var(--fs-12);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.kv-value {
+    flex: 1;
+    color: var(--text-primary);
+    font-weight: var(--fw-medium);
+    word-break: break-word;
+}
+
+@media (max-width: 575.98px) {
+    .kv-row {
+        flex-direction: column;
+        gap: 2px;
+    }
+    .kv-label {
+        flex: none;
+    }
+}
+
+/* ---------- 17. RESPONSIVE ---------- */
+@media (max-width: 767.98px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-bar .filter-group {
+        min-width: 100%;
+    }
+
+    .filter-bar .filter-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .filter-bar .filter-actions .btn {
+        flex: 1;
+    }
+
+    .app-card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .app-card-header-right {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .app-card-body {
+        padding: var(--sp-4);
+    }
+
+    .stat-card-value {
+        font-size: var(--fs-20);
+    }
+
+    .chart-container {
+        min-height: 220px;
+    }
+
+    .chart-container-lg {
+        min-height: 280px;
+    }
+}
+
+/* ---------- 18. ACCESSIBILITY ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-menu,
+    .mini-progress .progress-fill {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Focus visible for interactive components */
+.app-card:focus-within {
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 2px;
+}
+
+.badge-tab:focus-visible,
+.btn-icon-sm:focus-visible,
+.btn-more:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}

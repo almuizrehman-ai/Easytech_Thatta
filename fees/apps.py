@@ -1,0 +1,8 @@
+"""App configuration for the fees application."""
+from django.apps import AppConfig
+
+
+class FeesConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'fees'
+    verbose_name = 'Fee Management'
