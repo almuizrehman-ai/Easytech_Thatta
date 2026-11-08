@@ -2,7 +2,6 @@
 Django settings for EASYTECH THATTA Institute Management System.
 """
 from pathlib import Path
-
 from decouple import Csv, config
 
 # ============================================================
@@ -17,30 +16,37 @@ SECRET_KEY = config(
     'SECRET_KEY',
     default='django-insecure-dev-key-do-not-use-in-production',
 )
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool) # Production mein default False
 
-# ---- LAN / MOBILE ACCESS ----
-# Dev ke liye '*' (sab allow). Production me sirf specific hosts.
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='*',
+    default='*', # Railway ke liye '*' best hai jab tak custom domain na ho
     cast=Csv(),
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://127.0.0.1,http://localhost,http://192.168.100.192:8000,http://192.168.100.17:8000',
+    default='http://127.0.0.1,http://localhost,https://*.railway.app',
     cast=Csv(),
 )
 
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'    
+# Production Security Headers
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
-
 SESSION_COOKIE_AGE = 12 * 60 * 60
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
@@ -54,6 +60,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party
+    'whitenoise.runserver_nostatic', # WhiteNoise dev server ke liye
 
     # Local applications
     'accounts',
@@ -72,6 +81,7 @@ INSTALLED_APPS = [
 # ============================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # WhiteNoise production ke liye
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -170,6 +180,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise production configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
