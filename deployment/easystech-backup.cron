@@ -1,0 +1,12 @@
+# EASYTECH THATTA backup schedule
+# Install: sudo cp deployment/easystech-backup.cron /etc/cron.d/easystech-backup
+# Permissions: sudo chmod 644 /etc/cron.d/easystech-backup
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Daily backup at 2:00 AM
+0 2 * * * easystech /var/www/easystech/scripts/backup.sh >> /var/www/easystech/logs/cron.log 2>&1
+
+# Weekly cache clear (Sunday 3:00 AM) — safety net
+0 3 * * 0 easystech cd /var/www/easystech && /var/www/easystech/venv/bin/python manage.py clear_dashboard_cache >> /var/www/easystech/logs/cron.log 2>&1

@@ -1,0 +1,40 @@
+[Unit]
+Description=EASYTECH THATTA — Institute Management System
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=notify
+User=easystech
+Group=www-data
+WorkingDirectory=/var/www/easystech
+EnvironmentFile=/var/www/easystech/.env
+Environment="DJANGO_SETTINGS_MODULE=config.settings_production"
+Environment="PYTHONUNBUFFERED=1"
+
+ExecStart=/var/www/easystech/venv/bin/gunicorn \
+    --config /var/www/easystech/deployment/gunicorn.conf.py \
+    config.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
+
+# ---------- Hardening ----------
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/easystech/media /var/www/easystech/logs /var/www/easystech/backup
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
