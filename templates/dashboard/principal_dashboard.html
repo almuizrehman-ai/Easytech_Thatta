@@ -1,0 +1,745 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Principal Dashboard — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-card-body {
+        position: relative;
+        height: 280px;
+        padding: var(--sp-2) 0;
+    }
+    .chart-card-body.chart-sm {
+        height: 220px;
+    }
+    .chart-card-body canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    .quick-action-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: var(--sp-3) var(--sp-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all var(--transition);
+        height: 100%;
+    }
+    .quick-action-card:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        color: var(--accent);
+    }
+    .quick-action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    .quick-action-label {
+        font-size: var(--fs-11);
+        font-weight: var(--fw-semibold);
+        text-align: center;
+        line-height: 1.2;
+    }
+    .recent-list-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        padding: var(--sp-3) var(--sp-4);
+        border-bottom: 1px solid var(--border);
+        color: var(--text-primary);
+    }
+    .recent-list-item:last-child { border-bottom: none; }
+    .recent-list-item:hover { background: var(--bg-muted-soft); }
+    .recent-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--accent), var(--navy-600));
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    .recent-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-name {
+        font-size: var(--fs-13);
+        font-weight: var(--fw-semibold);
+        color: var(--navy-900);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .recent-meta {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+        margin: 0;
+    }
+    .recent-amount {
+        font-size: var(--fs-13);
+        font-weight: var(--fw-bold);
+        color: var(--success);
+        text-align: right;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Welcome Header ---------- #}
+<div class="page-header">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="page-title">Principal Overview — {{ request.user.get_short_name }} 🎓</h2>
+            <p class="page-description mb-0">
+                Institute-wide data · {{ kpis.total_staff }} active staff · {{ kpis.today_admissions }} admission{{ kpis.today_admissions|pluralize }} today
+            </p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'students:create' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus me-1"></i>New Admission
+            </a>
+            <a href="{% url 'courses:create' %}" class="btn btn-outline-primary">
+                <i class="bi bi-journal-plus me-1"></i>New Course
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ============================================================ #}
+{# KPI CARDS — ROW 1 (Institute Snapshot)                        #}
+{# ============================================================ #}
+<div class="row g-3 mb-3">
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-primary"><i class="bi bi-people"></i></div>
+            <div class="stat-card-label">Total Students</div>
+            <div class="stat-card-value">{{ kpis.total_students }}</div>
+            <div class="text-muted text-small">+{{ kpis.today_admissions }} today</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-info"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="stat-card-label">Active Courses</div>
+            <div class="stat-card-value">{{ kpis.active_courses }}</div>
+            <div class="text-muted text-small">Running programs</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-info"><i class="bi bi-collection"></i></div>
+            <div class="stat-card-label">Active Batches</div>
+            <div class="stat-card-value">{{ kpis.active_batches }}</div>
+            <div class="text-muted text-small">In progress</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-primary"><i class="bi bi-person-badge"></i></div>
+            <div class="stat-card-label">Total Staff</div>
+            <div class="stat-card-value">{{ kpis.total_staff }}</div>
+            <div class="text-muted text-small">Portal accounts</div>
+        </div>
+    </div>
+
+</div>
+
+{# ============================================================ #}
+{# KPI CARDS — ROW 2 (Financial)                                 #}
+{# ============================================================ #}
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div class="stat-card-icon bg-soft-success"><i class="bi bi-cash-coin"></i></div>
+                <span class="badge bg-success-subtle text-success-emphasis text-tiny">Today</span>
+            </div>
+            <div class="stat-card-label">Today's Collection</div>
+            <div class="stat-card-value text-success">Rs. {{ kpis.today_collection|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.today_txn_count }} transaction{{ kpis.today_txn_count|pluralize }} · all staff</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div class="stat-card-icon bg-soft-primary"><i class="bi bi-calendar-month"></i></div>
+                <span class="badge bg-primary-subtle text-primary-emphasis text-tiny">Month</span>
+            </div>
+            <div class="stat-card-label">Month's Collection</div>
+            <div class="stat-card-value">Rs. {{ kpis.month_collection|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.month_txn_count }} transaction{{ kpis.month_txn_count|pluralize }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div class="stat-card-icon bg-soft-warning"><i class="bi bi-hourglass-split"></i></div>
+                <a href="{% url 'fees:pending_fees' %}" class="small text-warning fw-semibold">View →</a>
+            </div>
+            <div class="stat-card-label">Pending Fees</div>
+            <div class="stat-card-value text-warning">Rs. {{ kpis.pending_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.pending_count }} open obligation{{ kpis.pending_count|pluralize }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div class="stat-card-icon bg-soft-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                <a href="{% url 'fees:overdue_fees' %}" class="small text-danger fw-semibold">View →</a>
+            </div>
+            <div class="stat-card-label">Overdue Fees</div>
+            <div class="stat-card-value text-danger">Rs. {{ kpis.overdue_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.overdue_count }} past due</div>
+        </div>
+    </div>
+
+</div>
+
+{# ============================================================ #}
+{# CHART ROW 1 — Daily + Monthly Collections                     #}
+{# ============================================================ #}
+<div class="row g-3 mb-3">
+
+    <div class="col-lg-7">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Daily Collection — Last 30 Days</span>
+                    </h3>
+                    <p class="app-card-subtitle">
+                        All staff · Total: <strong>Rs. {{ daily_total|floatformat:0 }}</strong>
+                    </p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="chart-card-body">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span>Monthly Revenue — Last 6 Months</span>
+                    </h3>
+                    <p class="app-card-subtitle">
+                        Total: <strong>Rs. {{ monthly_total|floatformat:0 }}</strong>
+                    </p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="chart-card-body">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ============================================================ #}
+{# CHART ROW 2 — Course + Fee Status + Batch (3 col)             #}
+{# ============================================================ #}
+<div class="row g-3 mb-3">
+
+    <div class="col-lg-4">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-pie-chart"></i>
+                        <span>Course Distribution</span>
+                    </h3>
+                    <p class="app-card-subtitle">{{ course_total }} active student{{ course_total|pluralize }}</p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="chart-card-body chart-sm d-flex align-items-center justify-content-center">
+                    <canvas id="courseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-donut"></i>
+                        <span>Fee Status</span>
+                    </h3>
+                    <p class="app-card-subtitle">{{ fee_status_total }} obligation{{ fee_status_total|pluralize }}</p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="chart-card-body chart-sm d-flex align-items-center justify-content-center">
+                    <canvas id="feeStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Batch-wise Students</span>
+                    </h3>
+                    <p class="app-card-subtitle">Top 8 batches</p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="chart-card-body chart-sm">
+                    <canvas id="batchChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ============================================================ #}
+{# RECENT ACTIVITY + QUICK ACTIONS                               #}
+{# ============================================================ #}
+<div class="row g-3">
+
+    {# ---------- Recent Payments (all staff) ---------- #}
+    <div class="col-lg-5">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Recent Payments (All Staff)</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if recent_payments %}
+                    {% for p in recent_payments %}
+                        <div class="recent-list-item">
+                            <div class="recent-avatar">
+                                {{ p.obligation.student.student_name|slice:":1"|upper }}
+                            </div>
+                            <div class="recent-info">
+                                <div class="recent-name">{{ p.obligation.student.student_name }}</div>
+                                <div class="recent-meta">
+                                    {{ p.obligation.get_obligation_type_display }}{% if p.obligation.obligation_month %} · {{ p.obligation.month_label }}{% endif %}
+                                    · by {{ p.received_by.get_full_name|truncatechars:18 }}
+                                    · {{ p.payment_date|date:"d M · H:i" }}
+                                </div>
+                            </div>
+                            <div class="recent-amount">+ Rs. {{ p.amount|floatformat:0 }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="px-4 py-5 text-center text-muted">
+                        <i class="bi bi-cash-stack" style="font-size: 28px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">Abhi tak koi payment record nahi hui.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Recent Admissions ---------- #}
+    <div class="col-lg-4">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Recent Admissions</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if recent_admissions %}
+                    {% for s in recent_admissions %}
+                        <a href="{% url 'students:detail' s.pk %}"
+                           class="recent-list-item text-decoration-none">
+                            <div class="recent-avatar">
+                                {% if s.photo %}
+                                    <img src="{{ s.photo.url }}" alt="{{ s.student_name }}">
+                                {% else %}
+                                    {{ s.student_name|slice:":1"|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="recent-info">
+                                <div class="recent-name">{{ s.student_name }}</div>
+                                <div class="recent-meta">
+                                    {{ s.course.code }} · {{ s.admission_date|date:"d M" }}
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="px-4 py-5 text-center text-muted">
+                        <i class="bi bi-people" style="font-size: 28px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">Abhi tak koi student admit nahi hua.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Admin Quick Actions ---------- #}
+    <div class="col-lg-3">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span>Admin Actions</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{% url 'courses:create' %}" class="quick-action-card">
+                            <div class="quick-action-icon"><i class="bi bi-journal-plus"></i></div>
+                            <div class="quick-action-label">Course</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'batches:create' %}" class="quick-action-card">
+                            <div class="quick-action-icon"><i class="bi bi-plus-square"></i></div>
+                            <div class="quick-action-label">Batch</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'fees:pending_summary' %}" class="quick-action-card">
+                            <div class="quick-action-icon"><i class="bi bi-pie-chart"></i></div>
+                            <div class="quick-action-label">Pending</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/admin/" class="quick-action-card">
+                            <div class="quick-action-icon"><i class="bi bi-gear"></i></div>
+                            <div class="quick-action-label">Admin</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ---------- Chart data (XSS-safe JSON) ---------- #}
+{{ charts_json|json_script:"chart-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    const dataEl = document.getElementById('chart-data');
+    if (!dataEl || typeof Chart === 'undefined') return;
+
+    const chartData = JSON.parse(dataEl.textContent);
+
+    // ---------- Shared defaults ----------
+    Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.padding = 14;
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+    Chart.defaults.plugins.legend.labels.boxHeight = 8;
+    Chart.defaults.maintainAspectRatio = false;
+
+    const palette = {
+        primary: '#2563eb',
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        info: '#0ea5e9',
+        muted: '#94a3b8',
+        purple: '#8b5cf6',
+        pink: '#ec4899',
+        teal: '#14b8a6',
+        orange: '#f97316',
+    };
+
+    // ---------- 1. Daily Collection (Line) ----------
+    const dailyCanvas = document.getElementById('dailyChart');
+    if (dailyCanvas && chartData.daily) {
+        const ctx = dailyCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.25)');
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0.01)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.daily.labels,
+                datasets: [{
+                    label: 'Daily Collection (Rs.)',
+                    data: chartData.daily.values,
+                    borderColor: palette.primary,
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: palette.primary,
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0b1736',
+                        padding: 10,
+                        callbacks: {
+                            label: function (ctx) {
+                                return 'Rs. ' + (ctx.parsed.y || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                        ticks: {
+                            callback: function (value) {
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---------- 2. Monthly Revenue (Bar) ----------
+    const monthlyCanvas = document.getElementById('monthlyChart');
+    if (monthlyCanvas && chartData.monthly) {
+        new Chart(monthlyCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartData.monthly.labels,
+                datasets: [{
+                    label: 'Monthly Revenue (Rs.)',
+                    data: chartData.monthly.values,
+                    backgroundColor: palette.primary,
+                    borderRadius: 6,
+                    barThickness: 28,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0b1736',
+                        padding: 10,
+                        callbacks: {
+                            label: function (ctx) {
+                                return 'Rs. ' + (ctx.parsed.y || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                        ticks: {
+                            callback: function (value) {
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---------- 3. Course Distribution (Doughnut) ----------
+    const courseCanvas = document.getElementById('courseChart');
+    if (courseCanvas && chartData.course) {
+        const courseColors = [
+            palette.primary, palette.success, palette.warning, palette.info,
+            palette.purple, palette.pink, palette.teal, palette.orange,
+        ];
+        new Chart(courseCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: chartData.course.labels,
+                datasets: [{
+                    data: chartData.course.values,
+                    backgroundColor: chartData.course.labels.map(
+                        (_, i) => courseColors[i % courseColors.length]
+                    ),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 10, font: { size: 10 } } },
+                    tooltip: {
+                        backgroundColor: '#0b1736',
+                        padding: 10,
+                        callbacks: {
+                            label: function (ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---------- 4. Fee Status (Doughnut) ----------
+    const feeCanvas = document.getElementById('feeStatusChart');
+    if (feeCanvas && chartData.feeStatus) {
+        const statusColors = {
+            'Paid': palette.success,
+            'Partial': palette.info,
+            'Pending': palette.warning,
+            'Overdue': palette.danger,
+            'Waived': palette.muted,
+        };
+        const bgColors = chartData.feeStatus.labels.map(l => statusColors[l] || palette.primary);
+
+        new Chart(feeCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: chartData.feeStatus.labels,
+                datasets: [{
+                    data: chartData.feeStatus.values,
+                    backgroundColor: bgColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 10, font: { size: 10 } } },
+                    tooltip: {
+                        backgroundColor: '#0b1736',
+                        padding: 10,
+                        callbacks: {
+                            label: function (ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---------- 5. Batch Distribution (Bar) ----------
+    const batchCanvas = document.getElementById('batchChart');
+    if (batchCanvas && chartData.batch) {
+        new Chart(batchCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartData.batch.labels,
+                datasets: [{
+                    label: 'Students',
+                    data: chartData.batch.values,
+                    backgroundColor: palette.info,
+                    borderRadius: 6,
+                    barThickness: 20,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0b1736',
+                        padding: 10,
+                        callbacks: {
+                            label: function (ctx) { return ctx.parsed.y + ' students'; }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 }, maxRotation: 40, minRotation: 0 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

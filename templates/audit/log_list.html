@@ -1,0 +1,235 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Audit Logs — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .audit-timeline {
+        position: relative;
+        padding-left: 32px;
+    }
+    .audit-timeline::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: var(--border);
+    }
+    .audit-entry {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: var(--sp-4);
+        margin-bottom: var(--sp-3);
+    }
+    .audit-entry::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 3px solid var(--bg-card);
+        box-shadow: 0 0 0 1px var(--accent);
+    }
+    .audit-entry[data-action="create"]::before { background: #10b981; box-shadow: 0 0 0 1px #10b981; }
+    .audit-entry[data-action="update"]::before { background: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+    .audit-entry[data-action="delete"]::before { background: #ef4444; box-shadow: 0 0 0 1px #ef4444; }
+    .audit-entry[data-action="approve"]::before { background: #10b981; box-shadow: 0 0 0 1px #10b981; }
+    .audit-entry[data-action="reject"]::before { background: #ef4444; box-shadow: 0 0 0 1px #ef4444; }
+    .audit-entry[data-action="waive"]::before { background: #f59e0b; box-shadow: 0 0 0 1px #f59e0b; }
+    .audit-entry[data-action="reverse"]::before { background: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
+    .audit-entry[data-action="payment"]::before { background: #0ea5e9; box-shadow: 0 0 0 1px #0ea5e9; }
+
+    .audit-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        margin-bottom: var(--sp-2);
+    }
+    .audit-who {
+        font-weight: var(--fw-semibold);
+        color: var(--navy-900);
+        font-size: var(--fs-13);
+    }
+    .audit-action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: var(--fs-10);
+        font-weight: var(--fw-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-left: 6px;
+    }
+    .action-create { background: #ecfdf5; color: #047857; }
+    .action-update { background: #eff6ff; color: #1e40af; }
+    .action-delete { background: #fef2f2; color: #b91c1c; }
+    .action-approve { background: #ecfdf5; color: #047857; }
+    .action-reject { background: #fef2f2; color: #b91c1c; }
+    .action-waive { background: #fffbeb; color: #b45309; }
+    .action-reverse { background: #fef2f2; color: #b91c1c; }
+    .action-payment { background: #eff6ff; color: #1e40af; }
+    .action-activate { background: #ecfdf5; color: #047857; }
+    .action-deactivate { background: #f1f5f9; color: #475569; }
+
+    .audit-meta {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+    .audit-summary {
+        font-size: var(--fs-13);
+        color: var(--text-primary);
+        margin-top: var(--sp-1);
+    }
+    .audit-changes {
+        margin-top: var(--sp-2);
+        background: var(--bg-muted-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--sp-2) var(--sp-3);
+        font-size: var(--fs-11);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .audit-changes .change-row {
+        display: flex;
+        gap: 8px;
+        padding: 2px 0;
+    }
+    .audit-changes .field-name {
+        color: var(--text-secondary);
+        font-weight: 600;
+        min-width: 120px;
+    }
+    .audit-changes .old-val { color: var(--danger); text-decoration: line-through; }
+    .audit-changes .new-val { color: var(--success); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Audit Logs" description="Immutable trail of all important system actions." %}
+
+{# ---------- Filters ---------- #}
+<div class="filter-bar">
+    <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1 align-items-end">
+        <div class="filter-group" style="min-width: 140px;">
+            <label class="filter-label">Action</label>
+            <select name="action" class="form-select">
+                <option value="">All Actions</option>
+                {% for val, label in action_choices %}
+                    <option value="{{ val }}" {% if action_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group" style="min-width: 140px;">
+            <label class="filter-label">Module</label>
+            <select name="module" class="form-select">
+                <option value="">All Modules</option>
+                {% for val, label in module_choices %}
+                    <option value="{{ val }}" {% if module_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group flex-grow-1" style="min-width: 200px;">
+            <label class="filter-label">Search</label>
+            <input type="search" name="q" class="form-control"
+                   placeholder="User, object, summary…"
+                   value="{{ search_query }}">
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            {% if action_filter or module_filter or search_query %}
+                <a href="{% url 'audit:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{# ---------- Timeline ---------- #}
+{% if logs %}
+    <div class="audit-timeline">
+        {% for log in logs %}
+            <div class="audit-entry" data-action="{{ log.action }}">
+                <div class="audit-header">
+                    <div>
+                        <span class="audit-who">
+                            {{ log.user.get_full_name|default:"System" }}
+                        </span>
+                        <span class="audit-action-badge action-{{ log.action }}">
+                            {{ log.get_action_display }}
+                        </span>
+                        <span class="audit-action-badge" style="background: var(--bg-muted-soft); color: var(--text-secondary);">
+                            {{ log.get_module_display }}
+                        </span>
+                    </div>
+                    <div class="audit-meta text-end">
+                        {{ log.created_at|date:"d M Y · H:i:s" }}
+                        {% if log.ip_address %}
+                            <div class="text-tiny">{{ log.ip_address }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if log.change_summary %}
+                    <div class="audit-summary">{{ log.change_summary }}</div>
+                {% endif %}
+
+                {% if log.object_repr %}
+                    <div class="audit-meta mt-1">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>{{ log.object_repr }}
+                    </div>
+                {% endif %}
+
+                {% with changes=log.changed_fields %}
+                    {% if changes %}
+                        <details class="audit-changes">
+                            <summary style="cursor: pointer; color: var(--text-secondary); font-size: var(--fs-11);">
+                                View changes ({{ changes|length }})
+                            </summary>
+                            <div class="mt-2">
+                                {% for c in changes %}
+                                    <div class="change-row">
+                                        <span class="field-name">{{ c.field }}</span>
+                                        <span class="old-val">{{ c.old|truncatechars:40|default:"—" }}</span>
+                                        <span style="color: var(--text-muted);">→</span>
+                                        <span class="new-val">{{ c.new|truncatechars:40|default:"—" }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endif %}
+                {% endwith %}
+
+                {% if log.notes %}
+                    <div class="audit-meta mt-2" style="font-style: italic;">
+                        <i class="bi bi-chat-left-text me-1"></i>{{ log.notes|truncatechars:120 }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {% include 'base/partials/pagination.html' with page_obj=page_obj label="log entries" only %}
+
+{% else %}
+    {% include 'base/partials/empty-state.html' with icon="shield-check" title="No audit log entries" message="Filters change karein ya activities do baad check karein." %}
+{% endif %}
+
+{% endblock %}

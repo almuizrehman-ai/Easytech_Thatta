@@ -1,0 +1,21 @@
+
+<div class="empty-state d-flex flex-column align-items-center text-center py-5">
+
+    <div class="empty-state-icon">
+        <i class="bi bi-{{ icon|default:'inbox' }}"></i>
+    </div>
+
+    <h3 class="empty-state-title">{{ title|default:"Nothing here yet" }}</h3>
+
+    {% if message %}
+        <p class="empty-state-message text-muted">{{ message }}</p>
+    {% endif %}
+
+    {% if action_url %}
+        <a href="{{ action_url }}" class="btn btn-primary mt-3">
+            {% if action_icon %}<i class="bi bi-{{ action_icon }} me-1"></i>{% endif %}
+            {{ action_label|default:"Get Started" }}
+        </a>
+    {% endif %}
+
+</div>

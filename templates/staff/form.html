@@ -1,0 +1,121 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+    {% if mode == 'edit' %}Edit Staff{% else %}New Staff{% endif %} — EASYTECH THATTA
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle %}
+
+<div class="row">
+    <div class="col-lg-7">
+
+        <form method="post" action="{{ form_action }}" novalidate autocomplete="off">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-person-badge"></i>
+                            <span>{% if mode == 'edit' %}Staff Details{% else %}New Staff Account{% endif %}</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+                    <div class="row g-3">
+                        {% if mode == 'create' %}
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.username only %}
+                            </div>
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.phone only %}
+                            </div>
+                            <div class="col-12">
+                                {% include 'components/_form_field.html' with field=form.full_name only %}
+                            </div>
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.password only %}
+                            </div>
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.password_confirm only %}
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                        <small class="text-muted d-block">{{ form.is_active.help_text }}</small>
+                                    </label>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-md-6">
+                                <div class="text-label">Username</div>
+                                <div class="fw-semibold" style="font-family: monospace;">{{ staff_user.username }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.phone only %}
+                            </div>
+                            <div class="col-12">
+                                {% include 'components/_form_field.html' with field=form.full_name only %}
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                        <small class="text-muted d-block">{{ form.is_active.help_text }}</small>
+                                    </label>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{{ cancel_url }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        {% if mode == 'edit' %}Save Changes{% else %}Create Staff{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    <div class="col-lg-5">
+        {% if mode == 'create' %}
+            <div class="callout callout-warning">
+                <div class="callout-icon"><i class="bi bi-key-fill"></i></div>
+                <div class="callout-body">
+                    <span class="callout-title">Password Sharing</span>
+                    Yeh password <strong>aap</strong> set kar rahe hain — staff ko directly bata dein.
+                    Baad mein reset ho sakta hai lekin audit mein log hoga.
+                </div>
+            </div>
+        {% else %}
+            <div class="callout callout-info">
+                <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+                <div class="callout-body">
+                    <span class="callout-title">Password Change</span>
+                    Password yahan change nahi hoti. Separate "Reset Password" action use karein.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

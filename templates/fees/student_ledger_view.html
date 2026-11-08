@@ -1,0 +1,40 @@
+{% extends 'base/base.html' %}
+{% block title %}My Fee Ledger — {{ student.student_name }}{% endblock %}
+{% block content %}
+{% include 'base/partials/page-header.html' with title="My Fee Ledger" description="Your complete fee history" %}
+
+<div class="app-card">
+    <div class="app-card-body p-0">
+        <table class="table app-table mb-0">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Due Date</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-end">Paid</th>
+                    <th class="text-end">Outstanding</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obl in obligations %}
+                <tr>
+                    <td>{{ obl.description }}</td>
+                    <td>{{ obl.due_date|date:"d M Y" }}</td>
+                    <td class="text-end">Rs. {{ obl.amount|floatformat:0 }}</td>
+                    <td class="text-end text-success">Rs. {{ obl.paid_amount|floatformat:0 }}</td>
+                    <td class="text-end fw-bold text-danger">Rs. {{ obl.outstanding_amount|floatformat:0 }}</td>
+                    <td>
+                        {% if obl.effective_status == 'paid' %}<span class="badge-status badge-success">Paid</span>
+                        {% elif obl.effective_status == 'overdue' %}<span class="badge-status badge-danger">Overdue</span>
+                        {% else %}<span class="badge-status badge-warning">Pending</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">Abhi tak koi fee add nahi hui.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

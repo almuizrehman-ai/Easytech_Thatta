@@ -1,0 +1,91 @@
+{% extends 'base/base.html' %}
+{% block title %}My Portal — {{ student.student_name }}{% endblock %}
+{% block extra_css %}
+<style>
+    .student-header { background: linear-gradient(135deg, #1e3a8a, #2563eb); border-radius: 16px; padding: 30px; color: #fff; margin-bottom: 20px; }
+    .student-avatar { width: 80px; height: 80px; border-radius: 16px; background: #fff; color: #1e3a8a; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; }
+</style>
+{% endblock %}
+{% block content %}
+<!-- Top Banner -->
+<div class="student-header d-flex align-items-center gap-4">
+    <div class="student-avatar">
+        {% if student.photo %}<img src="{{ student.photo.url }}" style="width:100%; height:100%; object-fit:cover; border-radius:16px;">{% else %}{{ student.student_name|slice:":1" }}{% endif %}
+    </div>
+    <div>
+        <h2 class="mb-1" style="font-weight: 800; color: #fff;">{{ student.student_name }}</h2>
+        <p class="mb-2" style="color: #cbd5e1;">s/o {{ student.father_name }} · {{ student.course.code }}</p>
+        <span class="badge bg-light text-dark">{{ student.student_id }}</span>
+        <span class="badge bg-success ms-2">{{ student.get_enrollment_status_display }}</span>
+    </div>
+</div>
+
+<!-- Fee Status Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="app-card text-center py-4">
+            <div class="text-label">Total Paid</div>
+            <h3 class="text-success fw-bold mt-2">Rs. {{ summary.total_paid|floatformat:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="app-card text-center py-4">
+            <div class="text-label">Outstanding</div>
+            <h3 class="text-warning fw-bold mt-2">Rs. {{ summary.total_outstanding|floatformat:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="app-card text-center py-4">
+            <div class="text-label">Overdue</div>
+            <h3 class="text-danger fw-bold mt-2">Rs. {{ summary.total_overdue|floatformat:0 }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Latest Fees with Receipt Downloads -->
+<div class="app-card">
+    <div class="app-card-header d-flex justify-content-between align-items-center">
+        <h3 class="app-card-title mb-0">My Fees & Receipts</h3>
+        <a href="{% url 'dashboard:student_ledger' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="app-card-body p-0">
+        <table class="table app-table mb-0">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obl in obligations %}
+                <tr>
+                    <td>{{ obl.description }}</td>
+                    <td class="text-end">Rs. {{ obl.amount|floatformat:0 }}</td>
+                    <td class="text-center">
+                        {% if obl.effective_status == 'paid' %}<span class="badge-status badge-success">Paid</span>
+                        {% else %}<span class="badge-status badge-warning">Pending</span>{% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if obl.effective_status == 'paid' and obl.payments.exists %}
+                            {% for payment in obl.payments.all %}
+                                {% if not payment.is_reversed %}
+                                    <a href="{% url 'dashboard:student_receipt' payment.pk %}" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-receipt"></i> Receipt
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Abhi tak koi fee nahi aayi.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

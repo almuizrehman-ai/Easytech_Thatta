@@ -1,0 +1,238 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Students — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .student-photo-thumb {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--bg-muted-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 13px;
+        overflow: hidden;
+    }
+    .student-id-label {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        padding: 2px 6px;
+        background: var(--bg-muted-soft);
+        color: var(--text-secondary);
+        border-radius: 4px;
+        letter-spacing: 0.3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Students" description="Manage admissions, profiles, and academic status." action_url="/students/new/" action_label="New Admission" action_icon="person-plus" %}
+
+{# ---------- Filters ---------- #}
+<div class="filter-bar">
+    <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1 align-items-end" role="search">
+
+        <div class="filter-group flex-grow-1" style="min-width: 200px;">
+            <label class="filter-label">Search</label>
+            <input type="search"
+                   name="q"
+                   class="form-control"
+                   placeholder="Name, father, ID, or mobile…"
+                   value="{{ search_query }}"
+                   autocomplete="off">
+        </div>
+
+        <div class="filter-group" style="min-width: 180px;">
+            <label class="filter-label">Course</label>
+            <select name="course" class="form-select" id="filterCourse">
+                <option value="">All Courses</option>
+                {% for c in courses %}
+                    <option value="{{ c.pk }}" {% if course_filter == c.pk|stringformat:'s' %}selected{% endif %}>
+                        {{ c.code }} — {{ c.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group" style="min-width: 200px;">
+            <label class="filter-label">Batch</label>
+            <select name="batch" class="form-select">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                    <option value="{{ b.pk }}" {% if batch_filter == b.pk|stringformat:'s' %}selected{% endif %}>
+                        {{ b.course.code }} · {{ b.start_month|date:"M Y" }} – {{ b.end_month|date:"M Y" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if status_filter and status_filter != 'all' %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            {% if search_query or course_filter or batch_filter %}
+                <a href="{% url 'students:list' %}{% if status_filter and status_filter != 'all' %}?status={{ status_filter }}{% endif %}"
+                   class="btn btn-outline-secondary"
+                   title="Clear filters">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{# ---------- Status Tabs ---------- #}
+<div class="badge-group mb-3">
+    {% with base_q="q="|add:search_query|add:"&course="|add:course_filter|add:"&batch="|add:batch_filter %}
+        <a href="?status=all&{{ base_q }}"
+           class="badge-tab {% if not status_filter or status_filter == 'all' %}active{% endif %}">
+            All Students
+            <span class="badge-count">{{ total_count }}</span>
+        </a>
+        <a href="?status=active&{{ base_q }}"
+           class="badge-tab {% if status_filter == 'active' %}active{% endif %}">
+            <i class="bi bi-check-circle"></i>Active
+            <span class="badge-count">{{ active_count }}</span>
+        </a>
+        <a href="?status=inactive&{{ base_q }}"
+           class="badge-tab {% if status_filter == 'inactive' %}active{% endif %}">
+            <i class="bi bi-pause-circle"></i>Inactive
+            <span class="badge-count">{{ inactive_count }}</span>
+        </a>
+        <a href="?status=graduated&{{ base_q }}"
+           class="badge-tab {% if status_filter == 'graduated' %}active{% endif %}">
+            <i class="bi bi-mortarboard"></i>Graduated
+        </a>
+        <a href="?status=dropped&{{ base_q }}"
+           class="badge-tab {% if status_filter == 'dropped' %}active{% endif %}">
+            <i class="bi bi-x-circle"></i>Dropped
+        </a>
+    {% endwith %}
+</div>
+
+{# ---------- Data Table ---------- #}
+<div class="app-card">
+    <div class="app-card-body p-0">
+
+        {% if students %}
+            <div class="table-responsive">
+                <table class="table app-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;"></th>
+                            <th>Student</th>
+                            <th style="width: 130px;">Student ID</th>
+                            <th style="width: 90px;">Course</th>
+                            <th>Batch</th>
+                            <th style="width: 130px;">Mobile</th>
+                            <th style="width: 110px;">Status</th>
+                            <th style="width: 110px;" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                            <tr>
+                                <td>
+                                    {% if s.photo %}
+                                        <img src="{{ s.photo.url }}"
+                                             alt="{{ s.student_name }}"
+                                             class="student-photo-thumb">
+                                    {% else %}
+                                        <div class="student-photo-thumb">
+                                            {{ s.student_name|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'students:detail' s.pk %}"
+                                       class="fw-semibold text-decoration-none">
+                                        {{ s.student_name }}
+                                    </a>
+                                    <div class="text-muted text-small mt-1">
+                                        s/o {{ s.father_name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="student-id-label">{{ s.student_id }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'courses:detail' s.course.pk %}"
+                                       class="badge bg-primary-subtle text-primary-emphasis text-decoration-none">
+                                        {{ s.course.code }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="text-small">{{ s.batch.display_name }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-small">{{ s.student_mobile }}</span>
+                                </td>
+                                <td>
+                                    {% if not s.is_active %}
+                                        <span class="badge-status badge-muted">
+                                            <i class="bi bi-circle" style="font-size: 6px;"></i> Inactive
+                                        </span>
+                                    {% elif s.enrollment_status == 'active' %}
+                                        <span class="badge-status badge-success">
+                                            <i class="bi bi-circle-fill" style="font-size: 6px;"></i> Active
+                                        </span>
+                                    {% elif s.enrollment_status == 'graduated' %}
+                                        <span class="badge-status badge-info">
+                                            <i class="bi bi-mortarboard"></i> Graduated
+                                        </span>
+                                    {% elif s.enrollment_status == 'dropped' %}
+                                        <span class="badge-status badge-danger">
+                                            <i class="bi bi-x-circle"></i> Dropped
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="row-actions d-inline-flex">
+                                        <a href="{% url 'students:detail' s.pk %}"
+                                           class="btn btn-icon-sm" title="View Profile">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'students:edit' s.pk %}"
+                                           class="btn btn-icon-sm" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if can_toggle %}
+                                            <form method="post"
+                                                  action="{% url 'students:toggle' s.pk %}"
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn btn-icon-sm {% if s.is_active %}btn-icon-danger{% endif %}"
+                                                        title="{% if s.is_active %}Deactivate{% else %}Activate{% endif %}"
+                                                        onclick="return confirm('{% if s.is_active %}Deactivate{% else %}Activate{% endif %} this student?');">
+                                                    <i class="bi bi-{% if s.is_active %}pause-circle{% else %}play-circle{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% url 'students:create' as new_admission_url %}
+            {% include 'base/partials/empty-state.html' with icon="people" title="No students found" message=search_query|yesno:"Try changing your filters.,Admit your first student to get started." action_url=new_admission_url action_label="New Admission" action_icon="person-plus" %}
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

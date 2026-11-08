@@ -1,0 +1,199 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Collection Reports — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Collection Reports" description="Fee collection details filtered by date, course, and staff." %}
+
+{# ---------- Summary Card ---------- #}
+<div class="report-summary mb-4" style="background: linear-gradient(135deg, #0b1736 0%, #16295c 100%); color: white; border-radius: 16px; padding: 24px;">
+    <div class="row align-items-center g-3">
+        <div class="col-md-5">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Total Collection</div>
+            <h2 style="font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0;">Rs. {{ total|floatformat:2 }}</h2>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 6px;">
+                <i class="bi bi-calendar3 me-1"></i>{{ range_label }} · {{ count }} transaction{{ count|pluralize }}
+            </div>
+        </div>
+        <div class="col-md-7">
+            {% if by_method %}
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">By Payment Method</div>
+                <div>
+                    {% for m in by_method %}
+                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255,255,255,0.08); border-radius: 6px; font-size: 11px; margin: 3px 4px 0 0;">
+                            {{ m.method_label }}: <strong>Rs. {{ m.total|floatformat:0 }}</strong> <span style="color: rgba(255,255,255,0.65);">({{ m.count }})</span>
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ---------- Filter Bar ---------- #}
+<div class="app-card mb-3">
+    <div class="app-card-header">
+        <div class="app-card-header-left">
+            <h3 class="app-card-title"><i class="bi bi-funnel"></i> <span>Filters</span></h3>
+        </div>
+        <div class="app-card-header-right">
+            <div style="display: flex; gap: 8px;">
+                <form method="post" action="{% url 'reports:export_excel' %}" class="d-inline">
+                    {% csrf_token %}
+                    {% for field in form %}{{ field.as_hidden }}{% endfor %}
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                    </button>
+                </form>
+                <form method="post" action="{% url 'reports:export_pdf' %}" class="d-inline">
+                    {% csrf_token %}
+                    {% for field in form %}{{ field.as_hidden }}{% endfor %}
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-card-body">
+        <form method="get" id="reportFilterForm">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-label">Date Range</label>
+                    {{ form.date_range }}
+                </div>
+                <div class="col-md-2 custom-date-group" style="display:none;">
+                    <label class="form-label text-label">From</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-2 custom-date-group" style="display:none;">
+                    <label class="form-label text-label">To</label>
+                    {{ form.end_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-label">Course</label>
+                    {{ form.course }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-label">Batch</label>
+                    {{ form.batch }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-label">Staff</label>
+                    {{ form.staff }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-label">Method</label>
+                    {{ form.payment_method }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-label">Search</label>
+                    {{ form.search }}
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search me-1"></i>Apply
+                    </button>
+                    <a href="{% url 'reports:collection' %}" class="btn btn-outline-secondary" title="Reset">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3 mb-0">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{# ---------- Results Table ---------- #}
+<div class="app-card">
+    <div class="app-card-header">
+        <div class="app-card-header-left">
+            <h3 class="app-card-title"><i class="bi bi-list-ul"></i> <span>Transactions</span></h3>
+            {% if is_truncated %}
+                <p class="app-card-subtitle">Showing first {{ preview_limit }} of {{ count }} — full data export karein.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="app-card-body p-0">
+        {% if rows %}
+            <div class="table-responsive">
+                <table class="table app-table table-hover table-compact mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">Txn ID</th>
+                            <th>Student</th>
+                            <th style="width: 120px;">Course</th>
+                            <th style="width: 160px;">Batch</th>
+                            <th style="width: 130px;">Category</th>
+                            <th style="width: 90px;">Month</th>
+                            <th class="text-end" style="width: 110px;">Amount</th>
+                            <th style="width: 120px;">Date</th>
+                            <th style="width: 90px;">Method</th>
+                            <th style="width: 120px;">Received By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rows %}
+                            <tr>
+                                <td><span style="font-family: monospace; font-size: 11px;">{{ r.transaction_id }}</span></td>
+                                <td>
+                                    <div class="fw-semibold text-small">{{ r.student_name }}</div>
+                                    <div class="text-tiny text-muted">{{ r.student_id }}</div>
+                                </td>
+                                <td><span class="text-small">{{ r.course_code }}</span></td>
+                                <td><span class="text-small">{{ r.batch_name }}</span></td>
+                                <td><span class="text-small">{{ r.fee_category }}</span></td>
+                                <td><span class="text-small">{{ r.obligation_month|default:"—" }}</span></td>
+                                <td class="text-end fw-semibold">Rs. {{ r.amount|floatformat:2 }}</td>
+                                <td><span class="text-small">{{ r.payment_date|date:"d M Y H:i" }}</span></td>
+                                <td><span class="text-small">{{ r.payment_method_label }}</span></td>
+                                <td><span class="text-small">{{ r.received_by }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--bg-muted-soft); font-weight: 600;">
+                            <td colspan="6" class="text-end">Total:</td>
+                            <td class="text-end">Rs. {{ total|floatformat:2 }}</td>
+                            <td colspan="3">{{ count }} transactions</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% else %}
+            {% include 'base/partials/empty-state.html' with icon="file-earmark-bar-graph" title="No transactions in this range" message="Filter change karein ya date range widen karein." %}
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+    const rangeSelect = document.getElementById('id_date_range');
+    const customGroups = document.querySelectorAll('.custom-date-group');
+
+    function toggleCustom() {
+        const show = rangeSelect && rangeSelect.value === 'custom';
+        customGroups.forEach(el => {
+            el.style.display = show ? '' : 'none';
+        });
+    }
+
+    if (rangeSelect) {
+        rangeSelect.addEventListener('change', toggleCustom);
+        toggleCustom();
+    }
+})();
+</script>
+{% endblock %}

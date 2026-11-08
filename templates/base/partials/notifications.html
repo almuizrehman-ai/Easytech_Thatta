@@ -1,0 +1,55 @@
+
+<div class="dropdown">
+
+    <button class="btn btn-icon position-relative"
+            type="button"
+            id="notificationsBell"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+            aria-label="Notifications">
+        <i class="bi bi-bell"></i>
+        {% if unread_count and unread_count > 0 %}
+            <span class="notif-dot"></span>
+            <span class="notif-count">{{ unread_count|default:0 }}</span>
+        {% endif %}
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown shadow-sm"
+         aria-labelledby="notificationsBell">
+
+        <div class="notif-header d-flex justify-content-between align-items-center">
+            <strong>Notifications</strong>
+            {% if unread_count and unread_count > 0 %}
+                <span class="badge bg-primary">{{ unread_count }} new</span>
+            {% endif %}
+        </div>
+
+        <div class="notif-list">
+            {% if notifications %}
+                {% for n in notifications %}
+                    <a href="{{ n.url|default:'#' }}" class="notif-item">
+                        <div class="notif-icon notif-icon-{{ n.variant|default:'primary' }}">
+                            <i class="bi bi-{{ n.icon|default:'bell' }}"></i>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-title">{{ n.title }}</div>
+                            <div class="notif-message">{{ n.message }}</div>
+                            <div class="notif-time">{{ n.time }}</div>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="notif-empty">
+                    <i class="bi bi-bell-slash"></i>
+                    <p class="mb-0 small text-muted">No new notifications</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="notif-footer">
+            <a href="#" class="small text-primary">View all notifications</a>
+        </div>
+
+    </div>
+</div>

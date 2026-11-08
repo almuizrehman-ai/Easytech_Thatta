@@ -1,0 +1,319 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Receipt {{ payment.transaction_id }} — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .receipt-success-banner {
+        background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+        color: #ffffff;
+        padding: var(--sp-5);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--sp-4);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+    }
+    .receipt-success-banner .check-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    .receipt-success-banner h2 {
+        color: #ffffff;
+        font-size: var(--fs-20);
+        font-weight: var(--fw-extrabold);
+        margin: 0 0 2px;
+    }
+    .receipt-success-banner p {
+        color: rgba(255,255,255,0.9);
+        margin: 0;
+        font-size: var(--fs-13);
+    }
+    .receipt-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: var(--sp-6);
+    }
+    .receipt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: var(--sp-4);
+        border-bottom: 2px solid var(--border);
+        margin-bottom: var(--sp-4);
+    }
+    .receipt-brand {
+        font-size: var(--fs-18);
+        font-weight: 800;
+        color: var(--navy-900);
+        letter-spacing: -0.02em;
+    }
+    .receipt-brand-sub {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .receipt-txn-label {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    .receipt-txn-value {
+        font-family: monospace;
+        font-size: var(--fs-13);
+        font-weight: 700;
+        color: var(--navy-900);
+    }
+    .receipt-section {
+        margin-bottom: var(--sp-4);
+    }
+    .receipt-section-title {
+        font-size: var(--fs-11);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-secondary);
+        margin-bottom: var(--sp-2);
+        padding-bottom: var(--sp-1);
+        border-bottom: 1px solid var(--border);
+    }
+    .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--sp-2) 0;
+        font-size: var(--fs-13);
+    }
+    .receipt-row .label { color: var(--text-secondary); }
+    .receipt-row .value { font-weight: var(--fw-semibold); text-align: right; }
+    .receipt-total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--sp-4);
+        background: var(--bg-muted-soft);
+        border-radius: var(--radius-sm);
+        margin-top: var(--sp-3);
+    }
+    .receipt-total-label {
+        font-size: var(--fs-13);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-secondary);
+    }
+    .receipt-total-value {
+        font-size: var(--fs-24);
+        font-weight: 800;
+        color: var(--navy-900);
+        letter-spacing: -0.02em;
+    }
+    .receipt-footer-note {
+        font-size: var(--fs-11);
+        color: var(--text-muted);
+        text-align: center;
+        padding-top: var(--sp-4);
+        border-top: 1px dashed var(--border);
+        margin-top: var(--sp-4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Success banner ---------- #}
+<div class="receipt-success-banner">
+    <div class="check-icon">
+        <i class="bi bi-check-lg"></i>
+    </div>
+    <div>
+        <h2>Payment Recorded Successfully</h2>
+        <p>Transaction {{ payment.transaction_id }} has been saved.</p>
+    </div>
+</div>
+
+<div class="row g-3">
+
+    {# ---------- Receipt card ---------- #}
+    <div class="col-lg-8">
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <div>
+                    <div class="receipt-brand">EASYTECH THATTA</div>
+                    <div class="receipt-brand-sub">Institute Management System</div>
+                </div>
+                <div class="text-end">
+                    <div class="receipt-txn-label">Transaction ID</div>
+                    <div class="receipt-txn-value">{{ payment.transaction_id }}</div>
+                </div>
+            </div>
+
+            {# Student info #}
+            <div class="receipt-section">
+                <div class="receipt-section-title">Student</div>
+                <div class="receipt-row">
+                    <span class="label">Name</span>
+                    <span class="value">{{ payment.obligation.student.student_name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Student ID</span>
+                    <span class="value">{{ payment.obligation.student.student_id }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Father</span>
+                    <span class="value">{{ payment.obligation.student.father_name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Mobile</span>
+                    <span class="value">{{ payment.obligation.student.student_mobile }}</span>
+                </div>
+            </div>
+
+            {# Fee details #}
+            <div class="receipt-section">
+                <div class="receipt-section-title">Fee Details</div>
+                <div class="receipt-row">
+                    <span class="label">Course</span>
+                    <span class="value">{{ payment.obligation.student.course.code }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Batch</span>
+                    <span class="value">{{ payment.obligation.student.batch.display_name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Obligation Type</span>
+                    <span class="value">{{ payment.obligation.get_obligation_type_display }}</span>
+                </div>
+                {% if payment.obligation.obligation_month %}
+                    <div class="receipt-row">
+                        <span class="label">Month</span>
+                        <span class="value">{{ payment.obligation.month_label }}</span>
+                    </div>
+                {% endif %}
+                <div class="receipt-row">
+                    <span class="label">Original Amount</span>
+                    <span class="value">Rs. {{ payment.obligation.amount|floatformat:2 }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Previously Paid</span>
+                    <span class="value">Rs. {{ payment.obligation.paid_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            {# Payment details #}
+            <div class="receipt-section">
+                <div class="receipt-section-title">Payment</div>
+                <div class="receipt-row">
+                    <span class="label">Payment Date</span>
+                    <span class="value">{{ payment.payment_date|date:"d M Y · H:i" }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Method</span>
+                    <span class="value">{{ payment.get_payment_method_display }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Received By</span>
+                    <span class="value">{{ payment.received_by.get_full_name }}</span>
+                </div>
+                {% if payment.notes %}
+                    <div class="receipt-row">
+                        <span class="label">Notes</span>
+                        <span class="value">{{ payment.notes }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Total #}
+            <div class="receipt-total-row">
+                <div class="receipt-total-label">Amount Paid</div>
+                <div class="receipt-total-value">Rs. {{ payment.amount|floatformat:2 }}</div>
+            </div>
+
+            {% if payment.obligation.outstanding_amount > 0 %}
+                <div class="callout callout-warning mt-3">
+                    <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+                    <div class="callout-body">
+                        <span class="callout-title">Remaining Balance</span>
+                        Rs. {{ payment.obligation.outstanding_amount|floatformat:2 }} still outstanding on this obligation.
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="receipt-footer-note">
+                Computer-generated receipt. Koi signature zaroori nahi.<br>
+                &copy; {% now "Y" %} EASYTECH THATTA
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Actions sidebar ---------- #}
+    <div class="col-lg-4">
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span>Actions</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body d-flex flex-column gap-2">
+                <a href="{% url 'fees:print_receipt' payment.pk %}"
+                   target="_blank"
+                   class="btn btn-primary">
+                    <i class="bi bi-printer me-1"></i>Print Receipt
+                </a>
+                <a href="{% url 'fees:quick_collect' payment.obligation.student.pk %}"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-cash-coin me-1"></i>Collect More from {{ payment.obligation.student.student_name|truncatechars:18 }}
+                </a>
+                <a href="{% url 'fees:collection_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Collection
+                </a>
+                <hr class="my-1">
+                <a href="{% url 'fees:student_ledger' payment.obligation.student.pk %}"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-receipt me-1"></i>Full Ledger
+                </a>
+            </div>
+        </div>
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Security</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body d-flex flex-column gap-2">
+                <a href="{% url 'fees:corrections_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>View Corrections
+                </a>
+                <a href="{% url 'fees:request_correction' payment.pk %}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil-square me-1"></i>Request Correction
+                </a>
+            </div>
+        </div>
+        <div class="callout callout-success">
+            <div class="callout-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Immutable Record</span>
+                Yeh transaction permanently record hai. Reversal sirf Phase 8 ke correction workflow se hoga.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

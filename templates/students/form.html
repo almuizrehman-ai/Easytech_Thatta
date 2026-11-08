@@ -1,0 +1,400 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+    {% if mode == 'edit' %}Edit Student{% else %}New Admission{% endif %} — EASYTECH THATTA
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+    }
+    .form-section-header {
+        padding: 20px 24px 10px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .step-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+    }
+    .form-section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--navy-900);
+        margin: 0;
+    }
+    .form-section-subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 2px 0 0 0;
+    }
+    .form-section-body {
+        padding: 10px 24px 24px 24px;
+    }
+
+    /* Photo Upload */
+    .photo-upload-wrap {
+        position: relative;
+        display: inline-block;
+    }
+    .photo-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px dashed var(--border-strong);
+        background: var(--bg-muted-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 36px;
+        transition: all 0.2s;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    .photo-preview:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+    }
+    .photo-preview.has-image {
+        border-style: solid;
+        border-color: var(--success);
+    }
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Sticky Action Bar */
+    .action-bar {
+        position: sticky;
+        bottom: 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        z-index: 100;
+        margin-top: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 767.98px) {
+        .form-section-body { padding: 16px; }
+        .form-section-header { padding: 16px; }
+        .action-bar { flex-direction: column; gap: 12px; padding: 16px; }
+        .action-bar > * { width: 100%; }
+        .photo-preview { width: 100px; height: 100px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-4">
+    <div>
+        <h2 class="page-title mb-1">{% if mode == 'edit' %}Edit Student Record{% else %}New Student Admission{% endif %}</h2>
+        <p class="page-description mb-0">
+            {% if mode == 'edit' %}
+                Update student information. Fee snapshots are locked.
+            {% else %}
+                Fill the form carefully. A unique Student ID will be generated automatically.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<form method="post" action="{{ form_action }}" enctype="multipart/form-data" novalidate autocomplete="off" id="studentForm">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-12">
+
+            {# ============ SECTION 1: PERSONAL INFO ============ #}
+            <div class="app-card form-section mb-4">
+                <div class="form-section-header">
+                    <div class="step-icon">1</div>
+                    <div>
+                        <h3 class="form-section-title">Personal Information</h3>
+                        <p class="form-section-subtitle">Basic identification details of the student.</p>
+                    </div>
+                </div>
+                <div class="form-section-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.student_name only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.father_name only %}
+                        </div>
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.gender only %}
+                        </div>
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.date_of_birth only %}
+                        </div>
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.cnic_or_bform only %}
+                        </div>
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.address only %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ============ SECTION 2: CONTACT ============ #}
+            <div class="app-card form-section mb-4">
+                <div class="form-section-header">
+                    <div class="step-icon">2</div>
+                    <div>
+                        <h3 class="form-section-title">Contact Information</h3>
+                        <p class="form-section-subtitle">Student and guardian contact numbers.</p>
+                    </div>
+                </div>
+                <div class="form-section-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.student_mobile only %}
+                        </div>
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.father_mobile only %}
+                        </div>
+                        <div class="col-md-4">
+                            {% include 'components/_form_field.html' with field=form.student_email only %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ============ SECTION 3: ACADEMIC PLACEMENT ============ #}
+            <div class="app-card form-section mb-4">
+                <div class="form-section-header">
+                    <div class="step-icon">3</div>
+                    <div>
+                        <h3 class="form-section-title">Academic Placement</h3>
+                        <p class="form-section-subtitle">Select course, batch, and campus for the student.</p>
+                    </div>
+                </div>
+                <div class="form-section-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.course only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.batch only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.campus only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.admission_date only %}
+                        </div>
+                        {% if mode == 'edit' %}
+                            <div class="col-md-6">
+                                {% include 'components/_form_field.html' with field=form.enrollment_status only %}
+                            </div>
+                            <div class="col-12 mt-3">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                                        Active Student Record
+                                    </label>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# ============ SECTION 4: PREVIOUS EDUCATION ============ #}
+            <div class="app-card form-section mb-4">
+                <div class="form-section-header">
+                    <div class="step-icon">4</div>
+                    <div>
+                        <h3 class="form-section-title">Previous Education</h3>
+                        <p class="form-section-subtitle">Last qualification details (optional).</p>
+                    </div>
+                </div>
+                <div class="form-section-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.previous_degree only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.previous_board only %}
+                        </div>
+                        <div class="col-md-3 col-6">
+                            {% include 'components/_form_field.html' with field=form.previous_passing_year only %}
+                        </div>
+                        <div class="col-md-3 col-6">
+                            {% include 'components/_form_field.html' with field=form.previous_obtained_marks only %}
+                        </div>
+                        <div class="col-md-3 col-6">
+                            {% include 'components/_form_field.html' with field=form.previous_total_marks only %}
+                        </div>
+                        <div class="col-md-3 col-6">
+                            {% include 'components/_form_field.html' with field=form.previous_grade only %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ============ SECTION 5: PHOTO ============ #}
+            <div class="app-card form-section mb-4">
+                <div class="form-section-header">
+                    <div class="step-icon">5</div>
+                    <div>
+                        <h3 class="form-section-title">Profile Photo <span class="text-muted fw-normal fs-6">(Optional)</span></h3>
+                        <p class="form-section-subtitle">Upload a professional photo for records.</p>
+                    </div>
+                </div>
+                <div class="form-section-body">
+                    <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                        <div class="photo-upload-wrap">
+                            {% if student and student.photo %}
+                                <img src="{{ student.photo.url }}" alt="Current photo" class="photo-preview has-image" id="photoPreview">
+                            {% else %}
+                                <div class="photo-preview" id="photoPreview"><i class="bi bi-person"></i></div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 w-100">
+                            {% include 'components/_form_field.html' with field=form.photo only %}
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-info-circle me-1"></i> Max 2 MB · JPEG, PNG, WEBP
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {# ============ ACTION BAR ============ #}
+    <div class="action-bar">
+        <a href="{{ cancel_url }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg me-1"></i>Cancel
+        </a>
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check-lg me-1"></i>
+            {% if mode == 'edit' %}Save Changes{% else %}Admit Student{% endif %}
+        </button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    'use strict';
+
+    const batchData = {
+        {% for b in form.fields.batch.queryset %}
+            "{{ b.pk }}": {
+                "course_id": {{ b.course_id }},
+                "label": "{{ b.course.code|escapejs }} · {{ b.start_month|date:'M Y' }} – {{ b.end_month|date:'M Y' }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    const courseSelect = document.getElementById('id_course_for_student');
+    const batchSelect = document.getElementById('id_batch_for_student');
+    const photoInput = document.getElementById('id_photo');
+    const photoPreview = document.getElementById('photoPreview');
+
+    if (!courseSelect || !batchSelect) return;
+
+    const allBatchOptions = Array.from(batchSelect.options);
+
+    function filterBatches() {
+        const selectedCourseId = courseSelect.value;
+        const currentBatchValue = batchSelect.value;
+
+        batchSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = selectedCourseId ? '— Select Batch —' : '— Select Course First —';
+        batchSelect.appendChild(placeholder);
+
+        if (!selectedCourseId) {
+            batchSelect.disabled = true;
+            return;
+        }
+
+        batchSelect.disabled = false;
+
+        allBatchOptions.forEach(opt => {
+            if (!opt.value) return;
+            const data = batchData[opt.value];
+            if (data && String(data.course_id) === String(selectedCourseId)) {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = data.label;
+                if (opt.value === currentBatchValue) newOpt.selected = true;
+                batchSelect.appendChild(newOpt);
+            }
+        });
+    }
+
+    courseSelect.addEventListener('change', filterBatches);
+    filterBatches();
+
+    if (photoInput && photoPreview) {
+        photoPreview.addEventListener('click', () => photoInput.click());
+
+        photoInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                if (window.Toast) window.Toast.error('Photo 2 MB se kam honi chahiye.');
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                if (photoPreview.tagName === 'IMG') {
+                    photoPreview.src = e.target.result;
+                    photoPreview.classList.add('has-image');
+                } else {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'photo-preview has-image';
+                    img.id = 'photoPreview';
+                    img.alt = 'Preview';
+                    photoPreview.replaceWith(img);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+</script>
+{% endblock %}

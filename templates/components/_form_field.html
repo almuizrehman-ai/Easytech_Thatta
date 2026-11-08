@@ -1,0 +1,62 @@
+{% comment %}
+Reusable form field component.
+
+Context parameters:
+  field         : Django BoundField (required)   — e.g. form.student_name
+  label         : string  — Override field.label (optional)
+  help_text     : string  — Override field.help_text (optional)
+  required_mark : bool    — Show red asterisk (auto-detects field.field.required)
+  horizontal    : bool    — Label on left, input on right (default: stacked)
+  col_class     : string  — Optional wrapper class (e.g. 'col-md-6')
+  placeholder   : string  — Override placeholder if widget supports it
+  autofocus     : bool    — Add autofocus to widget
+
+Renders:
+  - Label (with required asterisk)
+  - Widget (with is-invalid class if errors)
+  - Help text (if any)
+  - Error list (if any)
+
+Usage:
+  {% include 'components/_form_field.html' with field=form.student_name only %}
+
+  Or inside a grid:
+  <div class="col-md-6">
+    {% include 'components/_form_field.html' with field=form.student_name only %}
+  </div>
+{% endcomment %}
+<div class="app-form-field {% if col_class %}{{ col_class }}{% endif %}
+                          {% if horizontal %}row align-items-center{% endif %}">
+
+    {# ---------- Label ---------- #}
+    {% if field.label %}
+        <label for="{{ field.id_for_label }}"
+               class="field-label {% if horizontal %}col-sm-4 col-form-label{% endif %}">
+            {{ label|default:field.label }}
+            {% if field.field.required %}
+                <span class="field-required" aria-hidden="true">*</span>
+            {% endif %}
+        </label>
+    {% endif %}
+
+    {# ---------- Input + Help + Errors ---------- #}
+    <div class="{% if horizontal %}col-sm-8{% endif %} field-input-wrap">
+
+        {# Auto-add Bootstrap class if widget lacks one #}
+        {{ field }}
+
+        {% if field.help_text %}
+            <div class="field-help">{{ help_text|default:field.help_text|safe }}</div>
+        {% endif %}
+
+        {% if field.errors %}
+            <div class="field-error" role="alert">
+                {% for error in field.errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>

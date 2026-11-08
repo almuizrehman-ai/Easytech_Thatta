@@ -1,0 +1,32 @@
+
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+
+    <div class="page-header-text">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h1 class="page-title">{{ title|default:"Untitled Page" }}</h1>
+            {% if badge_text %}
+                <span class="badge {{ badge_class|default:'bg-primary-subtle text-primary-emphasis' }}">
+                    {{ badge_text }}
+                </span>
+            {% endif %}
+        </div>
+        {% if description %}
+            <p class="page-description mb-0">{{ description }}</p>
+        {% endif %}
+    </div>
+
+    {% if actions or action_url %}
+        <div class="page-actions d-flex gap-2 flex-wrap">
+            {% if action_url %}
+                <a href="{{ action_url }}" class="btn btn-primary">
+                    {% if action_icon %}<i class="bi bi-{{ action_icon }} me-1"></i>{% endif %}
+                    {{ action_label|default:"New" }}
+                </a>
+            {% endif %}
+            {% if actions %}
+                {{ actions|safe }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>

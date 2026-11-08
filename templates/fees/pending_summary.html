@@ -1,0 +1,170 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Pending Summary — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Pending Summary" description="Outstanding fees grouped by course, batch, and aging." %}
+
+{# ---------- Totals Banner ---------- #}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-warning"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-card-label">Total Pending (by Course)</div>
+            <div class="stat-card-value text-warning">Rs. {{ total_course|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-info"><i class="bi bi-collection"></i></div>
+            <div class="stat-card-label">Total Pending (by Batch)</div>
+            <div class="stat-card-value">Rs. {{ total_batch|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-danger"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-card-label">Total Overdue (All Buckets)</div>
+            <div class="stat-card-value text-danger">Rs. {{ total_aging|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ total_aging_count }} obligation{{ total_aging_count|pluralize }}</div>
+        </div>
+    </div>
+</div>
+
+{# ---------- Aging Buckets ---------- #}
+<div class="app-card mb-4">
+    <div class="app-card-header">
+        <div class="app-card-header-left">
+            <h3 class="app-card-title">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Overdue Aging</span>
+            </h3>
+            <p class="app-card-subtitle">Amounts bucketed by days past due.</p>
+        </div>
+    </div>
+    <div class="app-card-body">
+        <div class="row g-3">
+            {% for bucket in aging %}
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-card-label">{{ bucket.label }}</div>
+                        <div class="stat-card-value {% if forloop.counter >= 3 %}text-danger{% else %}text-warning{% endif %}">
+                            Rs. {{ bucket.total|floatformat:0 }}
+                        </div>
+                        <div class="text-muted text-small">{{ bucket.count }} obligation{{ bucket.count|pluralize }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ---------- By Course / By Batch ---------- #}
+<div class="row g-3">
+    {# ---------- By Course ---------- #}
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Pending by Course</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if by_course %}
+                    <table class="table app-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th class="text-center" style="width: 100px;">Students</th>
+                                <th class="text-end" style="width: 140px;">Pending</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in by_course %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'courses:detail' item.course.pk %}" class="text-decoration-none">
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">{{ item.course.code }}</span>
+                                            <span class="text-small ms-1">{{ item.course.name }}</span>
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                                            {{ item.student_count }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-semibold text-warning">
+                                        Rs. {{ item.pending_total|floatformat:0 }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="px-4 py-5 text-center text-muted">
+                        <i class="bi bi-check-circle" style="font-size: 28px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">No pending fees. All clear!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- By Batch ---------- #}
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-collection"></i>
+                        <span>Pending by Batch</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if by_batch %}
+                    <table class="table app-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Batch</th>
+                                <th class="text-center" style="width: 100px;">Students</th>
+                                <th class="text-end" style="width: 140px;">Pending</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in by_batch %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'batches:detail' item.batch.pk %}" class="text-decoration-none text-small">
+                                            {{ item.batch.display_name }}
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                                            {{ item.student_count }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-semibold text-warning">
+                                        Rs. {{ item.pending_total|floatformat:0 }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="px-4 py-5 text-center text-muted">
+                        <i class="bi bi-check-circle" style="font-size: 28px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">No pending fees. All clear!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

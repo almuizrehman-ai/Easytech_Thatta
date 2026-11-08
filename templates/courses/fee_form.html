@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ page_title }} — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle badge_text=course.code badge_class="bg-primary-subtle text-primary-emphasis" %}
+
+<div class="row">
+    <div class="col-lg-7">
+
+        <form method="post" action="{{ form_action }}" novalidate autocomplete="off">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-tag"></i>
+                            <span>Fee Category Name</span>
+                        </h3>
+                        <p class="app-card-subtitle">
+                            For <strong>{{ course.name }}</strong> ({{ course.code }})
+                        </p>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.name only %}
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active
+                                    <small class="text-muted d-block">
+                                        Inactive categories remain in records but won't be used for new students.
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{{ cancel_url }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        {% if fee %}Save Changes{% else %}Add Category{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    {# ---------- Helper ---------- #}
+    <div class="col-lg-5">
+        <div class="callout callout-info">
+            <div class="callout-icon">
+                <i class="bi bi-lightbulb-fill"></i>
+            </div>
+            <div class="callout-body">
+                <span class="callout-title">Common Categories</span>
+                <ul class="mb-0 ps-3 mt-1">
+                    <li><strong>Admission Fee</strong> — one-time at enrollment</li>
+                    <li><strong>Registration Fee</strong> — one-time</li>
+                    <li><strong>Exam Fee</strong> — per exam</li>
+                    <li><strong>Semester 1 Fee</strong>, <strong>Semester 2 Fee</strong> — per term</li>
+                </ul>
+            </div>
+        </div>
+        <div class="callout callout-warning mt-3">
+            <div class="callout-icon">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="callout-body">
+                <span class="callout-title">Amount Kab Dalega?</span>
+                Amount yahan nahi dalna. Jab student aayega, tab staff uski profile se <strong>Add New Fee</strong> par jayega aur yahan se category select karke amount dalega.
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

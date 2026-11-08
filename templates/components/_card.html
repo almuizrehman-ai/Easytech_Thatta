@@ -1,0 +1,67 @@
+{% comment %}
+Reusable card component.
+
+Context parameters (all optional unless noted):
+  title         : string  — Header title text
+  icon          : string  — Bootstrap icon name shown before title (e.g. "bar-chart")
+  subtitle      : string  — Small secondary line in header
+  header_action : string  — Raw HTML for right-side header actions (use |safe)
+  body          : string  — Raw HTML body content (alternative to {% block body %})
+  footer        : string  — Raw HTML footer content
+  variant       : string  — 'default' | 'primary' | 'success' | 'warning' | 'danger'
+                            Adds accent top border for visual emphasis.
+  flat          : bool    — Removes hover elevation (for static containers)
+  class_name    : string  — Additional CSS classes appended to outer wrapper
+
+Usage (with body string):
+  {% include 'components/_card.html' with
+      title="Monthly Collection"
+      icon="bar-chart"
+      body="<p class='display-6 mb-0'>Rs. 45,000</p>"
+      only
+  %}
+
+Usage (with child content via `only` + block — not supported directly, use body):
+  Components are included via `{% include %}` which does not support blocks.
+  For complex bodies, either:
+    a) Pass complete HTML through `body` variable, OR
+    b) Extend with a wrapper template that uses this card's classes directly.
+{% endcomment %}
+<div class="app-card app-card-{{ variant|default:'default' }} {% if flat %}app-card-flat{% endif %} {{ class_name|default:'' }}">
+
+    {% if title or header_action %}
+        <div class="app-card-header">
+            <div class="app-card-header-left">
+                {% if title %}
+                    <h3 class="app-card-title">
+                        {% if icon %}<i class="bi bi-{{ icon }}"></i>{% endif %}
+                        <span>{{ title }}</span>
+                    </h3>
+                {% endif %}
+                {% if subtitle %}
+                    <p class="app-card-subtitle">{{ subtitle }}</p>
+                {% endif %}
+            </div>
+            {% if header_action %}
+                <div class="app-card-header-right">
+                    {{ header_action|safe }}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="app-card-body">
+        {% if body %}
+            {{ body|safe }}
+        {% else %}
+            {# If body not provided, callers may inject via parent context — leave empty #}
+        {% endif %}
+    </div>
+
+    {% if footer %}
+        <div class="app-card-footer">
+            {{ footer|safe }}
+        </div>
+    {% endif %}
+
+</div>

@@ -1,0 +1,178 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Review Correction #{{ correction.pk }} — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-context {
+        background: var(--bg-muted-soft);
+        border-radius: var(--radius-md);
+        padding: var(--sp-4);
+        margin-bottom: var(--sp-4);
+    }
+    .decision-option {
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: var(--sp-3) var(--sp-4);
+        margin-bottom: var(--sp-2);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    .decision-option:hover {
+        border-color: var(--accent-ring);
+        background: var(--accent-soft);
+    }
+    .decision-option input[type="radio"] {
+        margin-right: var(--sp-2);
+    }
+    .decision-option .decision-title {
+        font-weight: var(--fw-bold);
+        font-size: var(--fs-13);
+    }
+    .decision-option .decision-desc {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% include 'base/partials/page-header.html' with
+    title="Review Correction Request"
+    description=f"Request #{correction.pk} · {correction.payment.transaction_id}"
+% %}
+
+<div class="row">
+    <div class="col-lg-7">
+
+        {# ---------- Context Summary ---------- #}
+        <div class="review-context">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-label">Requested By</div>
+                    <div class="fw-semibold">{{ correction.requested_by.get_full_name }}</div>
+                    <div class="text-tiny text-muted">{{ correction.created_at|date:"d M Y · H:i" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-label">Student</div>
+                    <div class="fw-semibold">{{ correction.payment.obligation.student.student_name }}</div>
+                    <div class="text-tiny text-muted">{{ correction.payment.obligation.student.student_id }}</div>
+                </div>
+                <div class="col-12">
+                    <div class="text-label">Requested Change ({{ correction.get_correction_type_display }})</div>
+                    <div class="fw-semibold">
+                        {% if correction.correction_type == 'amount_change' %}
+                            Rs. {{ correction.payment.amount|floatformat:2 }} → Rs. {{ correction.new_amount|floatformat:2 }}
+                        {% elif correction.correction_type == 'method_change' %}
+                            {{ correction.payment.get_payment_method_display }} → {{ correction.get_new_payment_method_display }}
+                        {% elif correction.correction_type == 'date_change' %}
+                            {{ correction.payment.payment_date|date:"d M Y · H:i" }} → {{ correction.new_payment_date|date:"d M Y · H:i" }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="text-label">Reason</div>
+                    <div class="text-small">{{ correction.reason|linebreaksbr }}</div>
+                </div>
+            </div>
+        </div>
+
+        {# ---------- Review Form ---------- #}
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Your Decision</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+
+                    {# ---------- Decision (approve / reject) ---------- #}
+                    <div class="mb-3">
+                        <label class="text-label d-block mb-2">Decision *</label>
+                        {% for choice in form.decision %}
+                            <label class="decision-option d-block" for="{{ choice.id_for_label }}">
+                                {{ choice.tag }}
+                                <span class="decision-title">
+                                    {% if choice.data.value == 'approve' %}
+                                        <i class="bi bi-check-circle text-success"></i> Approve
+                                    {% else %}
+                                        <i class="bi bi-x-circle text-danger"></i> Reject
+                                    {% endif %}
+                                </span>
+                                <div class="decision-desc ms-4">
+                                    {% if choice.data.value == 'approve' %}
+                                        Original payment reverse hogi aur corrected new payment banegi.
+                                    {% else %}
+                                        Koi change nahi hoga. Request closed with your reason.
+                                    {% endif %}
+                                </div>
+                            </label>
+                        {% endfor %}
+                        {% if form.decision.errors %}
+                            <div class="field-error">{{ form.decision.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        {% include 'components/_form_field.html' with field=form.review_notes only %}
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Reject karne ke liye reason zaroori hai.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{% url 'fees:correction_detail' correction.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Submit Decision
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    <div class="col-lg-5">
+        <div class="callout callout-info">
+            <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Approve karne pe kya hoga?</span>
+                <ol class="mb-0 ps-3 mt-2">
+                    <li>Original payment <strong>reversed</strong> mark hogi</li>
+                    <li>New payment created hogi with corrected values</li>
+                    <li>Donon actions audit log mein record honge</li>
+                    <li>Student ke obligation ka status automatically refresh hoga</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="callout callout-warning">
+            <div class="callout-icon"><i class="bi bi-shield-exclamation"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Irreversible</span>
+                Approve hone ke baad reversal + new payment <strong>undo nahi ho sakte</strong>
+                (sirf naya correction request ban sakta hai).
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

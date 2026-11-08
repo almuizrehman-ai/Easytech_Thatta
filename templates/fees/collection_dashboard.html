@@ -1,0 +1,426 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Fee Collection — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-panel {
+        background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-6);
+        margin-bottom: var(--sp-4);
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
+    .search-panel::after {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+        border-radius: 50%;
+    }
+    .search-panel h3 {
+        color: #ffffff;
+        font-size: var(--fs-18);
+        font-weight: var(--fw-bold);
+        margin: 0 0 var(--sp-1);
+    }
+    .search-panel p {
+        color: rgba(255,255,255,0.85);
+        font-size: var(--fs-13);
+        margin: 0 0 var(--sp-4);
+    }
+    .search-input-wrap {
+        position: relative;
+        max-width: 560px;
+    }
+    .search-input-wrap .form-control {
+        height: 52px;
+        font-size: var(--fs-15);
+        padding-left: 52px;
+        border-radius: var(--radius-md);
+        border: none;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .search-input-wrap .search-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: var(--text-muted);
+    }
+    .search-results {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        max-height: 420px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+    }
+    .search-results.show { display: block; }
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        padding: var(--sp-3) var(--sp-4);
+        border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: background 0.15s;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: var(--bg-muted-soft); }
+    .search-result-info { flex: 1; min-width: 0; }
+    .search-result-name {
+        font-weight: var(--fw-semibold);
+        font-size: var(--fs-13);
+        color: var(--navy-900);
+    }
+    .search-result-meta {
+        font-size: var(--fs-11);
+        color: var(--text-secondary);
+    }
+    .search-result-amount { text-align: right; flex-shrink: 0; }
+    .search-result-amount .amount {
+        font-weight: var(--fw-bold);
+        font-size: var(--fs-13);
+        color: var(--danger);
+    }
+    .search-result-amount .label {
+        font-size: var(--fs-10);
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+    .search-empty {
+        padding: var(--sp-4);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: var(--fs-12);
+    }
+    .aging-card {
+        padding: var(--sp-3) var(--sp-4);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        height: 100%;
+    }
+    .aging-card .aging-label {
+        font-size: var(--fs-11);
+        font-weight: var(--fw-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-bottom: var(--sp-2);
+    }
+    .aging-card .aging-value {
+        font-size: var(--fs-18);
+        font-weight: var(--fw-extrabold);
+        color: var(--navy-900);
+    }
+    .aging-card .aging-count {
+        font-size: var(--fs-11);
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle %}
+
+{# ---------- SEARCH PANEL ---------- #}
+<div class="search-panel">
+    <h3><i class="bi bi-search me-2"></i>Quick Student Lookup</h3>
+    <p>Naam, Student ID, ya mobile number se search karein — quick collect shuru karein.</p>
+
+    <div class="search-input-wrap">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text"
+               id="collectionSearchInput"
+               class="form-control"
+               placeholder="e.g. Ali Khan, EST-2027-0001, 03001234567…"
+               autocomplete="off"
+               autofocus>
+        <div class="search-results" id="collectionSearchResults"></div>
+    </div>
+</div>
+
+{# ---------- KPIs ---------- #}
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-success"><i class="bi bi-cash-coin"></i></div>
+            <div class="stat-card-label">Today's Collection</div>
+            <div class="stat-card-value text-success">Rs. {{ kpis.today_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">
+                {{ kpis.today_count }} transaction{{ kpis.today_count|pluralize }}
+                {% if not is_principal %}· your collections{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-primary"><i class="bi bi-calendar-month"></i></div>
+            <div class="stat-card-label">This Month</div>
+            <div class="stat-card-value">Rs. {{ kpis.month_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.month_count }} transactions</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-warning"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-card-label">Pending</div>
+            <div class="stat-card-value text-warning">Rs. {{ kpis.pending_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.pending_count }} open obligations</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon bg-soft-danger"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-card-label">Overdue</div>
+            <div class="stat-card-value text-danger">Rs. {{ kpis.overdue_total|floatformat:0 }}</div>
+            <div class="text-muted text-small">{{ kpis.overdue_count }} past due</div>
+        </div>
+    </div>
+</div>
+
+{# ---------- AGING BUCKETS ---------- #}
+<div class="app-card mb-4">
+    <div class="app-card-header">
+        <div class="app-card-header-left">
+            <h3 class="app-card-title"><i class="bi bi-bar-chart-line"></i> <span>Overdue Aging</span></h3>
+            <p class="app-card-subtitle">Overdue amounts bucketed by days past due.</p>
+        </div>
+    </div>
+    <div class="app-card-body">
+        <div class="row g-3">
+            {% for bucket in aging %}
+                <div class="col-md-3">
+                    <div class="aging-card">
+                        <div class="aging-label">{{ bucket.label }}</div>
+                        <div class="aging-value">Rs. {{ bucket.total|floatformat:0 }}</div>
+                        <div class="aging-count">{{ bucket.count }} obligation{{ bucket.count|pluralize }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ---------- RECENT PAYMENTS + BREAKDOWNS ---------- #}
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="app-card h-100">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title"><i class="bi bi-clock-history"></i> <span>Today's Recent Payments</span></h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if today_payments %}
+                    <table class="table app-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Txn</th>
+                                <th>Time</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in today_payments %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold text-small">{{ p.obligation.student.student_name }}</div>
+                                        <div class="text-tiny text-muted">{{ p.obligation.student.student_id }}</div>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'fees:receipt' p.pk %}" class="text-small text-decoration-none" style="font-family: monospace;">
+                                            {{ p.transaction_id|slice:"-8:" }}
+                                        </a>
+                                    </td>
+                                    <td><span class="text-small text-muted">{{ p.payment_date|time:"H:i" }}</span></td>
+                                    <td class="text-end fw-semibold">Rs. {{ p.amount|floatformat:0 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="px-4 py-5 text-center text-muted">
+                        <i class="bi bi-cash-stack" style="font-size: 28px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">Aaj koi payment nahi hui abhi.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title"><i class="bi bi-journal-bookmark"></i> <span>Pending by Course</span></h3>
+                </div>
+                <div class="app-card-header-right">
+                    <a href="{% url 'fees:pending_summary' %}" class="small text-primary">View all →</a>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if by_course %}
+                    {% for item in by_course %}
+                        <div class="d-flex align-items-center justify-content-between px-4 py-2 border-bottom" style="border-color: var(--border) !important;">
+                            <div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">{{ item.course.code }}</span>
+                                <span class="text-small ms-1">{{ item.student_count }} student{{ item.student_count|pluralize }}</span>
+                            </div>
+                            <span class="fw-semibold text-warning">Rs. {{ item.pending_total|floatformat:0 }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="px-4 py-3 text-center text-muted text-small">No pending fees.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title"><i class="bi bi-collection"></i> <span>Pending by Batch</span></h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if by_batch %}
+                    {% for item in by_batch %}
+                        <div class="d-flex align-items-center justify-content-between px-4 py-2 border-bottom" style="border-color: var(--border) !important;">
+                            <div>
+                                <div class="text-small fw-semibold">{{ item.batch.display_name }}</div>
+                                <div class="text-tiny text-muted">{{ item.student_count }} student{{ item.student_count|pluralize }}</div>
+                            </div>
+                            <span class="fw-semibold text-warning">Rs. {{ item.pending_total|floatformat:0 }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="px-4 py-3 text-center text-muted text-small">No pending fees.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    const searchInput = document.getElementById('collectionSearchInput');
+    const resultsBox = document.getElementById('collectionSearchResults');
+    if (!searchInput || !resultsBox) return;
+
+    const SEARCH_URL = '{% url "fees:collection_search" %}';
+    let debounceTimer = null;
+    let currentRequest = 0;
+
+    function hideResults() {
+        resultsBox.classList.remove('show');
+        resultsBox.innerHTML = '';
+    }
+
+    function renderResults(data) {
+        if (!data.results.length) {
+            resultsBox.innerHTML = '<div class="search-empty">Koi student nahi mila with outstanding fees.</div>';
+            resultsBox.classList.add('show');
+            return;
+        }
+
+        const html = data.results.map(r => {
+            const overdueBadge = parseFloat(r.overdue) > 0
+                ? `<span class="badge-status badge-danger" style="font-size: 9px;">Overdue Rs. ${formatMoney(r.overdue)}</span>`
+                : '';
+            return `
+                <a href="${r.url}" class="search-result-item">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+                        ${escapeHtml(r.name.charAt(0).toUpperCase())}
+                    </div>
+                    <div class="search-result-info">
+                        <div class="search-result-name">${escapeHtml(r.name)}</div>
+                        <div class="search-result-meta">
+                            ${escapeHtml(r.student_id)} · ${escapeHtml(r.course)} · ${escapeHtml(r.batch)}
+                        </div>
+                        <div style="margin-top: 2px;">${overdueBadge}</div>
+                    </div>
+                    <div class="search-result-amount">
+                        <div class="amount">Rs. ${formatMoney(r.outstanding)}</div>
+                        <div class="label">${r.open_count} due</div>
+                    </div>
+                </a>
+            `;
+        }).join('');
+
+        resultsBox.innerHTML = html;
+        resultsBox.classList.add('show');
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+    }
+
+    function formatMoney(value) {
+        const num = parseFloat(value) || 0;
+        return num.toLocaleString('en-PK', { maximumFractionDigits: 0 });
+    }
+
+    function performSearch(query) {
+        const reqId = ++currentRequest;
+        const url = `${SEARCH_URL}?q=${encodeURIComponent(query)}&format=json`;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(data => {
+                if (reqId !== currentRequest) return;
+                renderResults(data);
+            })
+            .catch(err => {
+                console.error('Search failed:', err);
+                if (window.Toast) window.Toast.error('Search fail ho gayi.');
+            });
+    }
+
+    searchInput.addEventListener('input', function () {
+        const q = this.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (q.length < 2) {
+            hideResults();
+            return;
+        }
+
+        debounceTimer = setTimeout(() => performSearch(q), 300);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+            hideResults();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') hideResults();
+    });
+})();
+</script>
+{% endblock %}

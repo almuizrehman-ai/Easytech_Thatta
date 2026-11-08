@@ -1,0 +1,212 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Request Correction — {{ payment.transaction_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-context {
+        background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%);
+        color: #ffffff;
+        border-radius: var(--radius-lg);
+        padding: var(--sp-5);
+        margin-bottom: var(--sp-4);
+    }
+    .payment-context-label {
+        font-size: var(--fs-11);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: rgba(255,255,255,0.7);
+    }
+    .payment-context-value {
+        font-size: var(--fs-16);
+        font-weight: 700;
+        color: #ffffff;
+    }
+    .payment-context-txn {
+        font-family: monospace;
+        font-size: var(--fs-13);
+        background: rgba(255,255,255,0.15);
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    .conditional-field {
+        display: none;
+    }
+    .conditional-field.visible {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% include 'base/partials/page-header.html' with
+    title="Request Payment Correction"
+    description="Correction requests require Principal approval before any changes are made."
+% %}
+
+{# ---------- Payment Context Banner ---------- #}
+<div class="payment-context">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="payment-context-label">Transaction ID</div>
+            <div class="payment-context-txn">{{ payment.transaction_id }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="payment-context-label">Student</div>
+            <div class="payment-context-value">{{ payment.obligation.student.student_name }}</div>
+            <div style="color: rgba(255,255,255,0.75); font-size: var(--fs-11);">
+                {{ payment.obligation.student.student_id }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="payment-context-label">Current Amount</div>
+            <div class="payment-context-value">Rs. {{ payment.amount|floatformat:2 }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+
+        <form method="post" novalidate autocomplete="off" id="correctionForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-tools"></i>
+                            <span>Correction Details</span>
+                        </h3>
+                        <p class="app-card-subtitle">
+                            Kis cheez ko correct karna hai? Select karein.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.correction_type only %}
+                        </div>
+
+                        {# Amount field — conditional #}
+                        <div class="col-md-6 conditional-field" data-for-type="amount_change">
+                            {% include 'components/_form_field.html' with field=form.new_amount only %}
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Current amount: Rs. {{ payment.amount|floatformat:2 }}
+                            </small>
+                        </div>
+
+                        {# Method field — conditional #}
+                        <div class="col-md-6 conditional-field" data-for-type="method_change">
+                            {% include 'components/_form_field.html' with field=form.new_payment_method only %}
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Current method: {{ payment.get_payment_method_display }}
+                            </small>
+                        </div>
+
+                        {# Date field — conditional #}
+                        <div class="col-md-6 conditional-field" data-for-type="date_change">
+                            {% include 'components/_form_field.html' with field=form.new_payment_date only %}
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Current date: {{ payment.payment_date|date:"d M Y · H:i" }}
+                            </small>
+                        </div>
+
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.reason only %}
+                        </div>
+
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.notes only %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{% url 'fees:receipt' payment.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>Submit Request
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    <div class="col-lg-5">
+        <div class="callout callout-warning">
+            <div class="callout-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Approval Required</span>
+                Correction request submit karte hi Principal ko notification jayegi.
+                Jab tak approve nahi hoti, current payment valid rahegi.
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon"><i class="bi bi-arrow-left-right"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">How Approval Works</span>
+                Approve hone pe:
+                <ul class="mb-0 ps-3 mt-1">
+                    <li>Original payment <strong>reversed</strong> ho jayegi (record preserved)</li>
+                    <li>Corrected <strong>new payment</strong> generate hogi</li>
+                    <li>Dono actions audit log mein jayenge</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-icon"><i class="bi bi-person-badge"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Received By</span>
+                {{ payment.received_by.get_full_name|default:"—" }} on
+                {{ payment.payment_date|date:"d M Y · H:i" }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+    const typeSelect = document.getElementById('id_correction_type');
+    const conditionalFields = document.querySelectorAll('.conditional-field');
+
+    function toggleConditional() {
+        const selected = typeSelect ? typeSelect.value : '';
+        conditionalFields.forEach(field => {
+            if (field.dataset.forType === selected) {
+                field.classList.add('visible');
+            } else {
+                field.classList.remove('visible');
+            }
+        });
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleConditional);
+        toggleConditional();
+    }
+})();
+</script>
+{% endblock %}

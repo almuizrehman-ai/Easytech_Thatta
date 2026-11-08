@@ -1,0 +1,152 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ page_title }} — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle %}
+
+{# ---------- Total Banner ---------- #}
+{% if total_overdue %}
+    <div class="callout callout-danger mb-3">
+        <div class="callout-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div class="callout-body">
+            <span class="callout-title">Total Overdue: Rs. {{ total_overdue|floatformat:2 }}</span>
+            {% if count_overdue %}{{ count_overdue }} obligations past due. {% endif %}
+            Urgent follow-up required.
+        </div>
+    </div>
+{% elif total_pending %}
+    <div class="callout callout-warning mb-3">
+        <div class="callout-icon"><i class="bi bi-hourglass-split"></i></div>
+        <div class="callout-body">
+            <span class="callout-title">Total Pending: Rs. {{ total_pending|floatformat:2 }}</span>
+            {{ obligations|length }} open obligations.
+        </div>
+    </div>
+{% endif %}
+
+{# ---------- Filters ---------- #}
+<div class="filter-bar">
+    <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1 align-items-end">
+        <div class="filter-group flex-grow-1" style="min-width: 220px;">
+            <label class="filter-label">Search</label>
+            <input type="search"
+                   name="q"
+                   class="form-control"
+                   placeholder="Student name, ID, or mobile…"
+                   value="{{ search_query }}"
+                   autocomplete="off">
+        </div>
+
+        {% if type_choices %}
+            <div class="filter-group" style="min-width: 180px;">
+                <label class="filter-label">Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    {% for val, label in type_choices %}
+                        <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            {% if search_query or type_filter %}
+                <a href="{{ request.path }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{# ---------- Table ---------- #}
+<div class="app-card">
+    <div class="app-card-body p-0">
+        {% if obligations %}
+            <div class="table-responsive">
+                <table class="table app-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th style="width: 150px;">Type / Month</th>
+                            <th style="width: 120px;">Due Date</th>
+                            <th class="text-end" style="width: 110px;">Amount</th>
+                            <th class="text-end" style="width: 110px;">Paid</th>
+                            <th class="text-end" style="width: 120px;">Outstanding</th>
+                            <th style="width: 110px;">Status</th>
+                            <th class="text-end" style="width: 130px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obl in obligations %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'students:detail' obl.student.pk %}"
+                                       class="fw-semibold text-decoration-none">
+                                        {{ obl.student.student_name }}
+                                    </a>
+                                    <div class="text-muted text-tiny">{{ obl.student.student_id }}</div>
+                                    <div class="text-muted text-tiny">{{ obl.student.student_mobile }}</div>
+                                </td>
+                                <td>
+                                    <div class="text-small">{{ obl.get_obligation_type_display }}</div>
+                                    {% if obl.obligation_month %}
+                                        <div class="text-muted text-tiny">{{ obl.month_label }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-small {% if obl.is_overdue %}text-danger fw-semibold{% endif %}">
+                                        {{ obl.due_date|date:"d M Y" }}
+                                    </span>
+                                    {% if obl.is_overdue %}
+                                        <div class="text-tiny text-danger">{{ obl.days_overdue }}d late</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end"><span class="text-small">Rs. {{ obl.amount|floatformat:0 }}</span></td>
+                                <td class="text-end"><span class="text-small text-success">Rs. {{ obl.paid_amount|floatformat:0 }}</span></td>
+                                <td class="text-end fw-semibold">
+                                    <span class="{% if obl.is_overdue %}text-danger{% else %}text-warning{% endif %}">
+                                        Rs. {{ obl.outstanding_amount|floatformat:0 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% with status=obl.effective_status %}
+                                        {% if status == 'overdue' %}
+                                            <span class="badge-status badge-danger">Overdue</span>
+                                        {% elif status == 'partial' %}
+                                            <span class="badge-status badge-info">Partial</span>
+                                        {% else %}
+                                            <span class="badge-status badge-warning">Pending</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="row-actions d-inline-flex">
+                                        <a href="{% url 'fees:obligation_detail' obl.pk %}"
+                                           class="btn btn-icon-sm" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'fees:record_payment' obl.pk %}"
+                                           class="btn btn-icon-sm" title="Record Payment">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% include 'base/partials/empty-state.html' with icon="check-circle" title="All clear!" message="Koi pending ya overdue fee nahi hai." %}
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

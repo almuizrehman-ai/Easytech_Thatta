@@ -1,0 +1,404 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ student.student_name }} — EASYTECH THATTA{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Profile Photo */
+    .profile-photo-wrap {
+        width: 120px;
+        height: 120px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--accent), var(--navy-600));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 48px;
+        font-weight: 800;
+        box-shadow: var(--shadow-md);
+        flex-shrink: 0;
+    }
+    .profile-photo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .profile-name {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--navy-900);
+        margin: 0 0 4px;
+        letter-spacing: -0.02em;
+    }
+    .profile-id {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 13px;
+        color: var(--text-secondary);
+        background: var(--bg-muted-soft);
+        padding: 4px 10px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    /* Clean Tabs */
+    .app-tabs {
+        display: flex;
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 24px;
+        gap: 8px;
+    }
+    .tab-item {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+        margin-bottom: -2px;
+    }
+    .tab-item:hover {
+        color: var(--accent);
+        background: var(--bg-muted-soft);
+        border-radius: 8px 8px 0 0;
+    }
+    .tab-item.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Student Profile" description="Admission details, contact information, and fee history." %}
+
+<div class="row g-3">
+
+    {# ============================================================ #}
+    {# LEFT COLUMN                                                  #}
+    {# ============================================================ #}
+    <div class="col-lg-8">
+
+        {# ---------- Profile Header Card ---------- #}
+        <div class="app-card mb-3">
+            <div class="app-card-body">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-4">
+                    <div class="profile-photo-wrap">
+                        {% if student.photo %}
+                            <img src="{{ student.photo.url }}" alt="{{ student.student_name }}">
+                        {% else %}
+                            {{ student.student_name|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h2 class="profile-name">{{ student.student_name }}</h2>
+                        <p class="text-secondary mb-2">
+                            s/o {{ student.father_name }}
+                            {% if student.gender %} · {{ student.get_gender_display }}{% endif %}
+                            {% if student.age %} · {{ student.age }} years{% endif %}
+                        </p>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="profile-id">{{ student.student_id }}</span>
+                            {% if not student.is_active %}
+                                <span class="badge-status badge-muted"><i class="bi bi-circle" style="font-size: 6px;"></i> Inactive</span>
+                            {% elif student.enrollment_status == 'active' %}
+                                <span class="badge-status badge-success"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> Active</span>
+                            {% elif student.enrollment_status == 'graduated' %}
+                                <span class="badge-status badge-info"><i class="bi bi-mortarboard"></i> Graduated</span>
+                            {% else %}
+                                <span class="badge-status badge-danger"><i class="bi bi-x-circle"></i> Dropped</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'students:edit' student.pk %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'students:print_form' student.pk %}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-printer me-1"></i>Print Form
+                        </a>
+                        {% if can_toggle %}
+                            <form method="post" action="{% url 'students:toggle' student.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm {% if student.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} w-100" onclick="return confirm('Are you sure?');">
+                                    <i class="bi bi-{% if student.is_active %}pause-circle{% else %}play-circle{% endif %} me-1"></i>
+                                    {% if student.is_active %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ---------- Portal Credentials Card ---------- #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title text-primary">
+                        <i class="bi bi-key-fill"></i>
+                        <span>Student Portal Credentials</span>
+                    </h3>
+                    <p class="app-card-subtitle">Yeh details student ko login ke liye dein.</p>
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-label">Portal Username</div>
+                        <div class="fw-bold fs-5" style="font-family: monospace; color: var(--navy-900);">
+                            {{ student.student_id|lower }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-label">Portal Password</div>
+                        <div class="fw-bold fs-5" style="font-family: monospace; color: var(--accent);">
+                            {{ student.portal_password|default:"Not generated" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ---------- Tabs ---------- #}
+        <ul class="nav nav-tabs app-tabs" id="studentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active tab-item" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button" role="tab">
+                    <i class="bi bi-person-vcard me-1"></i> Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-item" data-bs-toggle="tab" data-bs-target="#tab-fees" type="button" role="tab">
+                    <i class="bi bi-receipt me-1"></i> Fee Ledger
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-item" data-bs-toggle="tab" data-bs-target="#tab-audit" type="button" role="tab">
+                    <i class="bi bi-clock-history me-1"></i> Audit
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+
+            {# ---------- OVERVIEW TAB ---------- #}
+            <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+
+                {# Contact #}
+                <div class="app-card mb-3">
+                    <div class="app-card-header">
+                        <h3 class="app-card-title"><i class="bi bi-telephone me-1"></i> Contact Information</h3>
+                    </div>
+                    <div class="app-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="text-label">Student Mobile</div>
+                                <div class="fw-semibold">{{ student.student_mobile }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-label">Father Mobile</div>
+                                <div class="fw-semibold">{{ student.father_mobile }}</div>
+                            </div>
+                            {% if student.student_email %}
+                                <div class="col-md-6">
+                                    <div class="text-label">Email</div>
+                                    <div class="fw-semibold">{{ student.student_email }}</div>
+                                </div>
+                            {% endif %}
+                            {% if student.cnic_or_bform %}
+                                <div class="col-md-6">
+                                    <div class="text-label">CNIC / B-Form</div>
+                                    <div class="fw-semibold">{{ student.cnic_or_bform }}</div>
+                                </div>
+                            {% endif %}
+                            {% if student.address %}
+                                <div class="col-12">
+                                    <div class="text-label">Address</div>
+                                    <div class="fw-semibold">{{ student.address|linebreaksbr }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Academic #}
+                <div class="app-card mb-3">
+                    <div class="app-card-header">
+                        <h3 class="app-card-title"><i class="bi bi-mortarboard me-1"></i> Academic Placement</h3>
+                    </div>
+                    <div class="app-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="text-label">Course</div>
+                                <div class="fw-semibold">
+                                    <a href="{% url 'courses:detail' student.course.pk %}" class="text-decoration-none">
+                                        {{ student.course.code }} — {{ student.course.name }}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-label">Batch</div>
+                                <div class="fw-semibold">
+                                    <a href="{% url 'batches:detail' student.batch.pk %}" class="text-decoration-none">
+                                        {{ student.batch.display_name }}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-label">Admission Date</div>
+                                <div class="fw-semibold">{{ student.admission_date|date:"d M Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Fee Summary (Dynamic) #}
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <div class="app-card-header-left">
+                            <h3 class="app-card-title"><i class="bi bi-cash-stack me-1"></i> Fee Summary</h3>
+                            <p class="app-card-subtitle">Admission ke waqt freeze ki gayi fees.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-body p-0">
+                        <table class="table app-table mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold" style="width: 50%;">
+                                        Admission Fee
+                                        {% if student.admission_fee_paid %}
+                                            <div class="text-tiny text-success">Paid</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        Rs. {{ student.admission_fee_amount|floatformat:2 }}
+                                        {% if student.admission_fee_paid %}
+                                            <span class="badge-status badge-success ms-2">Paid</span>
+                                        {% else %}
+                                            <span class="badge-status badge-warning ms-2">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Monthly Fee</td>
+                                    <td class="text-end fw-bold">Rs. {{ student.monthly_fee_at_admission|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {# ---------- FEE LEDGER TAB ---------- #}
+            <div class="tab-pane fade" id="tab-fees" role="tabpanel">
+                <div class="app-card">
+                    <div class="app-card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Fee History</h4>
+                            <a href="{% url 'fees:student_ledger' student.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>View Full Ledger
+                            </a>
+                        </div>
+                        <p class="text-muted small mb-0">Detailed fee obligations aur payments dekhne ke liye upar wala button dabayein.</p>
+                    </div>
+                </div>
+            </div>
+
+            {# ---------- AUDIT TAB ---------- #}
+            <div class="tab-pane fade" id="tab-audit" role="tabpanel">
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <h3 class="app-card-title"><i class="bi bi-clock-history me-1"></i> Record History</h3>
+                    </div>
+                    <div class="app-card-body">
+                        <div class="timeline">
+                            <div class="timeline-item timeline-success">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <strong>Student record created</strong>
+                                    <div class="timeline-meta">
+                                        {{ student.created_at|date:"d M Y · H:i" }}
+                                        {% if student.created_by %} · by {{ student.created_by.get_full_name }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if student.updated_at != student.created_at %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <strong>Last updated</strong>
+                                        <div class="timeline-meta">{{ student.updated_at|date:"d M Y · H:i" }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {# ============================================================ #}
+    {# RIGHT COLUMN                                                  #}
+    {# ============================================================ #}
+    <div class="col-lg-4">
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-info-circle me-1"></i> Quick Info</h3>
+            </div>
+            <div class="app-card-body">
+                <div class="kv-row">
+                    <span class="kv-label">Student ID</span>
+                    <span class="kv-value" style="font-family: monospace;">{{ student.student_id }}</span>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-label">Course</span>
+                    <span class="kv-value">{{ student.course.code }}</span>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-label">Batch</span>
+                    <span class="kv-value">{{ student.batch.display_name }}</span>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-label">Admitted</span>
+                    <span class="kv-value">{{ student.admission_date|date:"d M Y" }}</span>
+                </div>
+                {% if student.date_of_birth %}
+                    <div class="kv-row">
+                        <span class="kv-label">Date of Birth</span>
+                        <span class="kv-value">{{ student.date_of_birth|date:"d M Y" }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-gear me-1"></i> Quick Actions</h3>
+            </div>
+            <div class="app-card-body d-flex flex-column gap-2">
+                <a href="{% url 'students:edit' student.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit Student
+                </a>
+                <a href="{% url 'students:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                </a>
+                <a href="{% url 'courses:detail' student.course.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-journal-bookmark me-1"></i>View Course
+                </a>
+                <a href="{% url 'batches:detail' student.batch.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-collection me-1"></i>View Batch
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

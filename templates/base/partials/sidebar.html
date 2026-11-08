@@ -1,0 +1,214 @@
+{% load static %}
+<aside class="app-sidebar" id="appSidebar" aria-label="Sidebar navigation">
+
+    {# ---------- Brand ---------- #}
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <div class="sidebar-brand-text">
+            <span class="brand-name">EASYTECH</span>
+            <span class="brand-sub">Thatta</span>
+        </div>
+    </div>
+
+    {# ---------- Navigation ---------- #}
+    <nav class="sidebar-nav">
+
+        <div class="nav-section">Main</div>
+
+        {# ============================================================ #}
+        {# STUDENT MENU                                                  #}
+        {# ============================================================ #}
+                {% if request.user.role == 'student' %}
+            <div class="nav-section">My Portal</div>
+            
+            <a href="{% url 'dashboard:student' %}"
+               class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>My Dashboard</span>
+            </a>
+
+            <a href="{% url 'dashboard:student_profile' %}"
+               class="nav-link {% if active_menu == 'profile' %}active{% endif %}">
+                <i class="bi bi-person-vcard"></i>
+                <span>My Profile</span>
+            </a>
+
+            <a href="{% url 'dashboard:student_ledger' %}"
+               class="nav-link {% if active_menu == 'ledger' %}active{% endif %}">
+                <i class="bi bi-receipt"></i>
+                <span>My Fee Ledger</span>
+            </a>
+
+            <a href="{% url 'dashboard:student_print' %}" target="_blank"
+               class="nav-link">
+                <i class="bi bi-printer"></i>
+                <span>Print Admission Form</span>
+            </a>
+        {# ============================================================ #}
+        {# PRINCIPAL MENU                                                #}
+        {# ============================================================ #}
+        {% elif request.user.is_principal %}
+            
+            <a href="{% url 'dashboard:principal' %}"
+               class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-section">Administration</div>
+
+            <a href="{% url 'courses:list' %}"
+               class="nav-link {% if active_menu == 'courses' %}active{% endif %}">
+                <i class="bi bi-journal-bookmark"></i>
+                <span>Courses</span>
+            </a>
+
+            <a href="{% url 'batches:list' %}"
+               class="nav-link {% if active_menu == 'batches' %}active{% endif %}">
+                <i class="bi bi-collection"></i>
+                <span>Batches</span>
+            </a>
+
+            <a href="{% url 'staff:list' %}"
+               class="nav-link {% if active_menu == 'staff' %}active{% endif %}">
+                <i class="bi bi-person-badge"></i>
+                <span>Staff Management</span>
+            </a>
+
+            <div class="nav-section">Operations</div>
+
+            <a href="{% url 'students:create' %}"
+               class="nav-link {% if active_menu == 'new_admission' %}active{% endif %}">
+                <i class="bi bi-person-plus"></i>
+                <span>New Admission</span>
+            </a>
+
+            <a href="{% url 'students:list' %}"
+               class="nav-link {% if active_menu == 'students' %}active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span>All Students</span>
+            </a>
+
+            <div class="nav-section">Fee Management</div>
+
+            <a href="{% url 'fees:collection_dashboard' %}"
+               class="nav-link {% if active_menu == 'fee_collection' %}active{% endif %}">
+                <i class="bi bi-cash-stack"></i>
+                <span>Fee Collection</span>
+            </a>
+
+            <a href="{% url 'fees:pending_summary' %}"
+               class="nav-link {% if active_menu == 'pending_summary' %}active{% endif %}">
+                <i class="bi bi-pie-chart"></i>
+                <span>Pending Summary</span>
+            </a>
+
+            <a href="{% url 'fees:pending_fees' %}"
+               class="nav-link {% if active_menu == 'pending_fees' %}active{% endif %}">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Pending Fees</span>
+            </a>
+
+            <a href="{% url 'fees:overdue_fees' %}"
+               class="nav-link {% if active_menu == 'overdue_fees' %}active{% endif %}">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Overdue Fees</span>
+            </a>
+
+            <a href="{% url 'fees:corrections_list' %}"
+               class="nav-link {% if active_menu == 'corrections' %}active{% endif %}">
+                <i class="bi bi-tools"></i>
+                <span>Corrections</span>
+            </a>
+
+            <div class="nav-section">Reports & Security</div>
+
+            <a href="{% url 'reports:collection' %}"
+               class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Collection Reports</span>
+            </a>
+
+            <a href="{% url 'audit:list' %}"
+               class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
+                <i class="bi bi-shield-check"></i>
+                <span>Audit Logs</span>
+            </a>
+
+        {# ============================================================ #}
+        {# STAFF MENU                                                    #}
+        {# ============================================================ #}
+        {% else %}
+            
+            <a href="{% url 'dashboard:staff' %}"
+               class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-section">Daily Operations</div>
+
+            <a href="{% url 'students:create' %}"
+               class="nav-link {% if active_menu == 'new_admission' %}active{% endif %}">
+                <i class="bi bi-person-plus"></i>
+                <span>New Admission</span>
+            </a>
+
+            <a href="{% url 'students:list' %}"
+               class="nav-link {% if active_menu == 'students' %}active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span>All Students</span>
+            </a>
+
+            <div class="nav-section">Fee Operations</div>
+
+            <a href="{% url 'fees:collection_dashboard' %}"
+               class="nav-link {% if active_menu == 'fee_collection' %}active{% endif %}">
+                <i class="bi bi-cash-coin"></i>
+                <span>Fee Collection</span>
+            </a>
+
+            <a href="{% url 'fees:pending_fees' %}"
+               class="nav-link {% if active_menu == 'pending_fees' %}active{% endif %}">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Pending Fees</span>
+            </a>
+
+            <a href="{% url 'fees:overdue_fees' %}"
+               class="nav-link {% if active_menu == 'overdue_fees' %}active{% endif %}">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Overdue Fees</span>
+            </a>
+
+            <a href="{% url 'fees:corrections_list' %}"
+               class="nav-link {% if active_menu == 'corrections' %}active{% endif %}">
+                <i class="bi bi-tools"></i>
+                <span>My Corrections</span>
+            </a>
+
+        {% endif %}
+
+    </nav>
+
+    {# ---------- Footer: user + logout ---------- #}
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                {{ request.user.get_short_name|slice:":1"|upper }}
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{ request.user.get_full_name }}</span>
+                <span class="user-role">{{ request.user.get_role_display }}</span>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'accounts:logout' %}" class="mt-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-light w-100">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </button>
+        </form>
+    </div>
+</aside>

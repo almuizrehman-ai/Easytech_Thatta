@@ -1,0 +1,150 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Batches — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Batch Management" description="Manage course batches, durations, and monthly fees." action_url="/batches/new/" action_label="New Batch" action_icon="plus-lg" %}
+
+{# ---------- Filters ---------- #}
+<div class="filter-bar">
+    <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1 align-items-end" role="search">
+
+        <div class="filter-group flex-grow-1" style="min-width: 180px;">
+            <label class="filter-label">Search</label>
+            <input type="search" name="q" class="form-control" placeholder="Batch name or course…" value="{{ search_query }}" autocomplete="off">
+        </div>
+
+        <div class="filter-group" style="min-width: 200px;">
+            <label class="filter-label">Course</label>
+            <select name="course" class="form-select">
+                <option value="">All Courses</option>
+                {% for c in courses %}
+                    <option value="{{ c.pk }}" {% if course_filter == c.pk|stringformat:'s' %}selected{% endif %}>
+                        {{ c.code }} — {{ c.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if status_filter and status_filter != 'all' %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            {% if search_query or course_filter %}
+                <a href="{% url 'batches:list' %}{% if status_filter and status_filter != 'all' %}?status={{ status_filter }}{% endif %}" class="btn btn-outline-secondary" title="Clear filters">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{# ---------- Status Tabs ---------- #}
+<div class="badge-group mb-3">
+    {% with base_params="q="|add:search_query|add:"&course="|add:course_filter %}
+        <a href="?status=all&{{ base_params }}" class="badge-tab {% if not status_filter or status_filter == 'all' %}active{% endif %}">
+            All Batches <span class="badge-count">{{ total_count }}</span>
+        </a>
+        <a href="?status=active&{{ base_params }}" class="badge-tab {% if status_filter == 'active' %}active{% endif %}">
+            <i class="bi bi-check-circle"></i>Active <span class="badge-count">{{ active_count }}</span>
+        </a>
+        <a href="?status=inactive&{{ base_params }}" class="badge-tab {% if status_filter == 'inactive' %}active{% endif %}">
+            <i class="bi bi-pause-circle"></i>Inactive <span class="badge-count">{{ inactive_count }}</span>
+        </a>
+    {% endwith %}
+</div>
+
+{# ---------- Data Table ---------- #}
+<div class="app-card">
+    <div class="app-card-body p-0">
+
+        {% if batches %}
+            <div class="table-responsive">
+                <table class="table app-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Batch</th>
+                            <th style="width: 80px;">Course</th>
+                            <th style="width: 120px;">Start</th>
+                            <th style="width: 120px;">End</th>
+                            <th style="width: 90px;" class="text-center">Duration</th>
+                            <th style="width: 130px;" class="text-end">Monthly Fee</th>
+                            <th style="width: 90px;" class="text-center">Students</th>
+                            <th style="width: 110px;">Status</th>
+                            <th style="width: 110px;" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in batches %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'batches:detail' batch.pk %}" class="fw-semibold text-decoration-none">
+                                        {{ batch.display_name }}
+                                    </a>
+                                    {% if batch.name %}
+                                        <div class="text-muted text-small mt-1"><i class="bi bi-tag me-1"></i>Custom name</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'courses:detail' batch.course.pk %}" class="badge bg-primary-subtle text-primary-emphasis text-decoration-none">
+                                        {{ batch.course.code }}
+                                    </a>
+                                </td>
+                                <td><span class="text-small">{{ batch.start_month|date:"M Y" }}</span></td>
+                                <td>
+                                    <span class="text-small">{{ batch.end_month|date:"M Y" }}</span>
+                                    {% if batch.is_ended %}<div class="text-muted text-tiny">(Ended)</div>{% endif %}
+                                </td>
+                                <td class="text-center"><span class="text-muted">{{ batch.duration_months }} mo</span></td>
+                                <td class="text-end fw-semibold">Rs. {{ batch.monthly_fee|floatformat:2 }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ batch.student_count }}</span>
+                                </td>
+                                <td>
+                                    {% if batch.is_active %}
+                                        <span class="badge-status badge-success"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> Active</span>
+                                    {% else %}
+                                        <span class="badge-status badge-muted"><i class="bi bi-circle" style="font-size: 6px;"></i> Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="row-actions d-inline-flex">
+                                        <a href="{% url 'batches:detail' batch.pk %}" class="btn btn-icon-sm" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'batches:edit' batch.pk %}" class="btn btn-icon-sm" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'batches:toggle' batch.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-icon-sm {% if batch.is_active %}btn-icon-danger{% endif %}" title="Toggle Status" onclick="return confirm('Are you sure?');">
+                                                <i class="bi bi-{% if batch.is_active %}pause-circle{% else %}play-circle{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% if courses %}
+                {% url 'batches:create' as new_batch_url %}
+                {% include 'base/partials/empty-state.html' with icon="collection" title="No batches found" message="Create your first batch under an existing course." action_url=new_batch_url action_label="New Batch" action_icon="plus-lg" %}
+            {% else %}
+                {% url 'courses:create' as new_course_url %}
+                {% include 'base/partials/empty-state.html' with icon="journal-bookmark" title="No courses yet" message="Batches course ke andar bante hain. Pehle ek course banayein." action_url=new_course_url action_label="Create Course First" action_icon="plus-lg" %}
+            {% endif %}
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

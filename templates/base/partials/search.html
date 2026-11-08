@@ -1,0 +1,26 @@
+
+<form class="navbar-search d-none d-md-flex"
+      method="get"
+      action="{% if search_url %}{{ search_url }}{% else %}#{% endif %}"
+      role="search">
+
+    <i class="bi bi-search" aria-hidden="true"></i>
+
+    <input type="search"
+           name="q"
+           class="form-control form-control-sm"
+           placeholder="{{ search_placeholder|default:'Search students, fees, batches…' }}"
+           aria-label="Search"
+           value="{{ search_query|default:'' }}"
+           autocomplete="off">
+
+    {% if search_query %}
+        <button type="button"
+                class="btn-clear-search"
+                onclick="this.parentElement.querySelector('input').value=''; this.style.display='none';"
+                aria-label="Clear search">
+            <i class="bi bi-x-circle-fill"></i>
+        </button>
+    {% endif %}
+
+</form>

@@ -1,0 +1,239 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Obligation — {{ obligation.student.student_name }}{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=obligation.description|default:obligation.get_obligation_type_display description=obligation.student.full_identity badge_text=obligation.student.student_id badge_class="bg-primary-subtle text-primary-emphasis" %}
+
+<div class="row g-3">
+
+    {# ---------- Left: Obligation + History ---------- #}
+    <div class="col-lg-8">
+
+        {# Obligation Summary #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-receipt"></i>
+                        <span>Obligation Summary</span>
+                    </h3>
+                </div>
+                <div class="app-card-header-right">
+                    {% with status=obligation.effective_status %}
+                        {% if status == 'paid' %}
+                            <span class="badge-status badge-success"><i class="bi bi-check-circle-fill"></i> Paid</span>
+                        {% elif status == 'partial' %}
+                            <span class="badge-status badge-info"><i class="bi bi-circle-half"></i> Partial</span>
+                        {% elif status == 'overdue' %}
+                            <span class="badge-status badge-danger"><i class="bi bi-exclamation-circle"></i> Overdue</span>
+                        {% elif status == 'waived' %}
+                            <span class="badge-status badge-secondary"><i class="bi bi-slash-circle"></i> Waived</span>
+                        {% else %}
+                            <span class="badge-status badge-warning"><i class="bi bi-clock"></i> Pending</span>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-label">Amount</div>
+                        <div class="fw-bold" style="font-size: 16px;">Rs. {{ obligation.amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-label">Paid</div>
+                        <div class="fw-bold text-success" style="font-size: 16px;">Rs. {{ obligation.paid_amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-label">Adjustment</div>
+                        <div class="fw-bold text-info" style="font-size: 16px;">Rs. {{ obligation.adjustment_amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-label">Outstanding</div>
+                        <div class="fw-bold {% if obligation.outstanding_amount > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size: 16px;">
+                            Rs. {{ obligation.outstanding_amount|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-label">Due Date</div>
+                        <div class="fw-semibold {% if obligation.is_overdue %}text-danger{% endif %}">
+                            {{ obligation.due_date|date:"d M Y" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-label">Type</div>
+                        <div class="fw-semibold">{{ obligation.get_obligation_type_display }}</div>
+                    </div>
+                    {% if obligation.obligation_month %}
+                        <div class="col-md-3">
+                            <div class="text-label">Month</div>
+                            <div class="fw-semibold">{{ obligation.month_label }}</div>
+                        </div>
+                    {% endif %}
+                    {% if obligation.fee_category %}
+                        <div class="col-md-3">
+                            <div class="text-label">Category</div>
+                            <div class="fw-semibold">{{ obligation.fee_category.name }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if obligation.notes %}
+                    <hr class="divider">
+                    <div class="text-label">Notes</div>
+                    <p class="text-small mb-0">{{ obligation.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Payments History #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Payment History</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                {% if payments %}
+                    <table class="table app-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Transaction</th>
+                                <th>Date</th>
+                                <th>Method</th>
+                                <th>Received By</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments %}
+                                <tr class="{% if p.is_reversed %}text-muted{% endif %}">
+                                    <td>
+                                        <span style="font-family: monospace; font-size: 12px;">{{ p.transaction_id }}</span>
+                                        {% if p.notes %}
+                                            <div class="text-tiny text-muted">{{ p.notes|truncatechars:50 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="text-small">{{ p.payment_date|date:"d M Y · H:i" }}</span></td>
+                                    <td><span class="text-small">{{ p.get_payment_method_display }}</span></td>
+                                    <td><span class="text-small">{{ p.received_by.get_full_name }}</span></td>
+                                    <td class="text-end fw-semibold">Rs. {{ p.amount|floatformat:2 }}</td>
+                                    <td class="text-center">
+                                        {% if p.is_reversed %}
+                                            <span class="badge-status badge-danger">Reversed</span>
+                                        {% else %}
+                                            <span class="badge-status badge-success">Recorded</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="px-4 py-4 text-center text-muted">
+                        <i class="bi bi-cash-stack" style="font-size: 24px; opacity: 0.4;"></i>
+                        <p class="mt-2 mb-0 text-small">Koi payment record nahi hui abhi.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Adjustments #}
+        {% if adjustments %}
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-sliders"></i>
+                            <span>Adjustments (Waiver / Concession)</span>
+                        </h3>
+                    </div>
+                </div>
+                <div class="app-card-body p-0">
+                    <table class="table app-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th class="text-end">Amount</th>
+                                <th>Reason</th>
+                                <th>Approved By</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adj in adjustments %}
+                                <tr>
+                                    <td>
+                                        <span class="badge-status {% if adj.adjustment_type == 'waiver' %}badge-secondary{% else %}badge-info{% endif %}">
+                                            {{ adj.get_adjustment_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        {% if adj.adjustment_type == 'waiver' %}Full{% else %}Rs. {{ adj.amount|floatformat:2 }}{% endif %}
+                                    </td>
+                                    <td><span class="text-small">{{ adj.reason|truncatechars:60 }}</span></td>
+                                    <td><span class="text-small">{{ adj.approved_by.get_full_name }}</span></td>
+                                    <td><span class="text-small">{{ adj.created_at|date:"d M Y" }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {# ---------- Right: Actions ---------- #}
+    <div class="col-lg-4">
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span>Actions</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="app-card-body d-flex flex-column gap-2">
+                {% if obligation.outstanding_amount > 0 and not obligation.is_waived %}
+                    <a href="{% url 'fees:record_payment' obligation.pk %}" class="btn btn-primary">
+                        <i class="bi bi-cash-coin me-1"></i>Record Payment
+                    </a>
+                {% endif %}
+
+                {% if request.user.is_principal and not obligation.is_waived %}
+                    <a href="{% url 'fees:apply_waiver' obligation.pk %}" class="btn btn-outline-danger">
+                        <i class="bi bi-slash-circle me-1"></i>Apply Waiver
+                    </a>
+                    {% if obligation.outstanding_amount > 0 %}
+                        <a href="{% url 'fees:apply_concession' obligation.pk %}" class="btn btn-outline-warning">
+                            <i class="bi bi-percent me-1"></i>Apply Concession
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                <a href="{% url 'fees:student_ledger' obligation.student.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Ledger
+                </a>
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Status Auto-Updates</span>
+                Status computed hoti hai payments + adjustments se. <strong>Overdue</strong> automatically derive hoti hai due date guzarne pe.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Add Fee — {{ student.student_name }}{% endblock %}
+
+{% block content %}
+
+{% include 'base/partials/page-header.html' with title="Add New Fee" description=student.student_name %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="app-card">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-receipt"></i> Fee Details</h3>
+                <p class="app-card-subtitle mb-0">
+                    {{ student.course.code }} — {{ student.batch.display_name }}
+                </p>
+            </div>
+            <div class="app-card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        {# 1. Fee Category Dropdown #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.fee_category.label }}</label>
+                            {{ form.fee_category }}
+                            {% if form.fee_category.errors %}
+                                <div class="text-danger small">{{ form.fee_category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# 2. Month Dropdown (Batch ke months) #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.month.label }}</label>
+                            {{ form.month }}
+                            <small class="text-muted d-block">{{ form.month.help_text }}</small>
+                            {% if form.month.errors %}
+                                <div class="text-danger small">{{ form.month.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# 3. Amount #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.amount.label }}</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                                <div class="text-danger small">{{ form.amount.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# 4. Due Date #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.due_date.label }}</label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                                <div class="text-danger small">{{ form.due_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# 5. Notes #}
+                        <div class="col-12">
+                            <label class="form-label fw-bold">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                        </div>
+
+                        {# 6. Is Paid #}
+                        <div class="col-12">
+                            <div class="form-check mt-2">
+                                {{ form.is_paid }}
+                                <label class="form-check-label fw-bold" for="{{ form.is_paid.id_for_label }}">
+                                    {{ form.is_paid.label }}
+                                </label>
+                                <small class="text-muted d-block">Agar tick hai, toh fee direct PAID mark hogi.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'fees:student_ledger' student.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Fee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

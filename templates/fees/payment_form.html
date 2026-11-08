@@ -1,0 +1,170 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Record Payment — {{ obligation.student.student_name }}{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Record Payment" description=page_subtitle badge_text=obligation.student.student_id badge_class="bg-primary-subtle text-primary-emphasis" %}
+
+<form method="post" action="" novalidate autocomplete="off" id="paymentForm">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row g-3">
+
+        {# ============================================================ #}
+        {# LEFT: Payment Form                                           #}
+        {# ============================================================ #}
+        <div class="col-lg-7">
+            <div class="app-card mb-3">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-cash-coin"></i>
+                            <span>Payment Details</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+                    <div class="row g-3">
+                        
+                        {# Amount Field with Quick Buttons #}
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Amount (Rs) <span class="text-danger">*</span></label>
+                            {{ form.amount }}
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-amt" data-amt="{{ obligation.outstanding_amount }}">
+                                    Pay Full (Rs. {{ obligation.outstanding_amount|floatformat:0 }})
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-amt" data-amt="{{ obligation.outstanding_amount|floatformat:0|floatformat:0|add:'-500' }}">
+                                    Pay Rs. 500 Less
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">{{ form.amount.help_text }}</small>
+                            {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {# Payment Method #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Payment Method <span class="text-danger">*</span></label>
+                            {{ form.payment_method }}
+                        </div>
+
+                        {# Payment Date #}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Payment Date</label>
+                            {{ form.payment_date }}
+                            <small class="text-muted d-block">Leave blank for current time.</small>
+                        </div>
+
+                        {# Notes #}
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Notes (Optional)</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{% url 'fees:obligation_detail' obligation.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-lg me-1"></i>Record Rs. <span id="btnAmount">{{ obligation.outstanding_amount|floatformat:0 }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# ============================================================ #}
+        {# RIGHT: Obligation Summary                                    #}
+        {# ============================================================ #}
+        <div class="col-lg-5">
+            <div class="app-card mb-3">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-receipt"></i>
+                            <span>Fee Summary</span>
+                        </h3>
+                    </div>
+                </div>
+                <div class="app-card-body">
+                    <div class="kv-row">
+                        <span class="kv-label">Student</span>
+                        <span class="kv-value">{{ obligation.student.student_name }} <br><small class="text-muted">{{ obligation.student.student_id }}</small></span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-label">Fee Type</span>
+                        <span class="kv-value fw-bold text-primary">{{ obligation.get_obligation_type_display }}</span>
+                    </div>
+                    {% if obligation.obligation_month %}
+                        <div class="kv-row">
+                            <span class="kv-label">Month</span>
+                            <span class="kv-value">{{ obligation.month_label }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="kv-row">
+                        <span class="kv-label">Total Amount</span>
+                        <span class="kv-value">Rs. {{ obligation.amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-label">Already Paid</span>
+                        <span class="kv-value text-success">Rs. {{ obligation.paid_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="kv-row bg-warning-subtle p-2 rounded mt-2">
+                        <span class="kv-label text-dark fw-bold">Outstanding</span>
+                        <span class="kv-value text-danger fw-bold fs-5">Rs. {{ obligation.outstanding_amount|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+                <div class="callout-body">
+                    <span class="callout-title">Partial Payments</span>
+                    Aap poora ya thora amount record kar sakte hain. Har payment ka apna <strong>Transaction ID</strong> generate hoga.
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const amountInput = document.getElementById('id_amount');
+    const btnAmount = document.getElementById('btnAmount');
+    const quickBtns = document.querySelectorAll('.quick-amt');
+
+    // Update submit button amount when typing
+    if (amountInput && btnAmount) {
+        amountInput.addEventListener('input', function() {
+            btnAmount.textContent = parseFloat(this.value || 0).toLocaleString();
+        });
+    }
+
+    // Quick Amount Buttons
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const amt = this.getAttribute('data-amt');
+            if (amountInput && amt) {
+                amountInput.value = amt;
+                btnAmount.textContent = parseFloat(amt).toLocaleString();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

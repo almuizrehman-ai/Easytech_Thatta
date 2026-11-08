@@ -1,0 +1,28 @@
+{% comment %}
+Reusable breadcrumb partial.
+
+Context expected:
+  crumbs: list of dicts:
+      [
+          {'label': 'Home', 'url': '/'},
+          {'label': 'Courses', 'url': '/courses/'},
+          {'label': 'DIT'}   ← last item, no url (current page)
+      ]
+{% endcomment %}
+{% if crumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb app-breadcrumb">
+            {% for crumb in crumbs %}
+                {% if forloop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ crumb.label }}
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+{% endif %}

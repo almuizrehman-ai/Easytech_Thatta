@@ -1,0 +1,62 @@
+<header class="app-navbar" role="banner">
+
+    {# ---------- Left: toggle + title ---------- #}
+    <div class="navbar-left">
+        <button class="btn btn-icon" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <div class="navbar-title-wrap">
+            <h1 class="navbar-title">{{ page_title|default:"Dashboard" }}</h1>
+            {% if page_subtitle %}
+                <p class="navbar-subtitle">{{ page_subtitle }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ---------- Center: global search ---------- #}
+    {% include 'base/partials/search.html' %}
+
+    {# ---------- Right: notifications + profile ---------- #}
+    <div class="navbar-right">
+
+        {# Notifications dropdown (empty until Phase 8 wires data) #}
+        {% include 'base/partials/notifications.html' %}
+
+        {# Profile dropdown #}
+        <div class="dropdown">
+            <button class="btn btn-profile d-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <span class="user-avatar-sm">
+                    {{ request.user.get_short_name|slice:":1"|upper }}
+                </span>
+                <span class="d-none d-md-inline text-start">
+                    <span class="d-block small fw-semibold">{{ request.user.get_full_name }}</span>
+                    <span class="d-block small text-muted">{{ request.user.get_role_display }}</span>
+                </span>
+                <i class="bi bi-chevron-down small"></i>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li class="px-3 py-2">
+                    <div class="fw-semibold">{{ request.user.get_full_name }}</div>
+                    <div class="small text-muted">{{ request.user.username }}</div>
+                    <div class="small text-primary mt-1">
+                        <i class="bi bi-shield-check me-1"></i>{{ request.user.get_role_display }} Access
+                    </div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

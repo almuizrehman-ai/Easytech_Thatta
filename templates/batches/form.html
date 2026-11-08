@@ -1,0 +1,172 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{% if batch %}Edit Batch{% else %}New Batch{% endif %} — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle %}
+
+<div class="row">
+    <div class="col-lg-8 col-xl-7">
+        <form method="post" action="{{ form_action }}" novalidate autocomplete="off" id="batchForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="app-card">
+                <div class="app-card-header">
+                    <div class="app-card-header-left">
+                        <h3 class="app-card-title">
+                            <i class="bi bi-collection"></i> <span>Batch Details</span>
+                        </h3>
+                        <p class="app-card-subtitle">Select course and start month. End month auto-calculated hai.</p>
+                    </div>
+                </div>
+
+                <div class="app-card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {% include 'components/_form_field.html' with field=form.course only %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.start_month.id_for_label }}" class="field-label">
+                                Start Month <span class="text-danger">*</span>
+                            </label>
+                            {{ form.start_month }}
+                            {% if form.start_month.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle me-1"></i>{{ form.start_month.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="field-help">Format: YYYY-MM (e.g. 2027-03)</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="field-label">End Month (auto)</label>
+                            <div class="form-control d-flex align-items-center bg-light" style="cursor: not-allowed;" id="endMonthPreview" title="Calculated from course duration">
+                                <i class="bi bi-magic me-2 text-primary"></i>
+                                <span class="text-muted">Select course and start month…</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.monthly_fee only %}
+                        </div>
+                        <div class="col-md-6">
+                            {% include 'components/_form_field.html' with field=form.name only %}
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active
+                                    <small class="text-muted d-block">Inactive batches remain in records but won't accept new admissions.</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-card-footer d-flex justify-content-end gap-2">
+                    <a href="{{ cancel_url }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% if batch %}Save Changes{% else %}Create Batch{% endif %}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4 col-xl-5">
+        <div class="callout callout-info">
+            <div class="callout-icon"><i class="bi bi-magic"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Auto-Calculated End</span>
+                End month aapko manually nahi likhna. Yeh <strong>course duration</strong> se automatically calculate hota hai.
+            </div>
+        </div>
+        <div class="callout callout-warning">
+            <div class="callout-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">Starting Month</span>
+                Starting month <strong>YYYY-MM</strong> format mein enter karein (e.g. <code>2027-03</code>).
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="course-data-store" style="display: none;">
+    {% for course in form.fields.course.queryset %}
+        <span data-course-id="{{ course.pk }}" data-duration="{{ course.duration_months }}"></span>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    'use strict';
+    const courseDurations = {};
+    document.querySelectorAll('#course-data-store span').forEach(span => {
+        courseDurations[span.getAttribute('data-course-id')] = parseInt(span.getAttribute('data-duration'), 10);
+    });
+
+    const courseInput = document.querySelector('[name="course"]');
+    const startInput = document.querySelector('[name="start_month"]');
+    const preview = document.getElementById('endMonthPreview');
+
+    if (!courseInput || !startInput || !preview) return;
+
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function calculateEndMonth() {
+        const courseId = courseInput.value;
+        const startRaw = startInput.value;
+
+        if (!courseId || !startRaw) {
+            preview.innerHTML = '<i class="bi bi-magic me-2 text-primary"></i><span class="text-muted">Select course and start month…</span>';
+            return;
+        }
+
+        const duration = courseDurations[courseId];
+        if (!duration) {
+            preview.innerHTML = '<i class="bi bi-magic me-2 text-primary"></i><span class="text-muted">Unknown duration</span>';
+            return;
+        }
+
+        const parts = startRaw.split('-');
+        if (parts.length !== 2) {
+            preview.innerHTML = '<i class="bi bi-magic me-2 text-primary"></i><span class="text-muted">Invalid format</span>';
+            return;
+        }
+
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        if (!year || !month || month < 1 || month > 12) {
+            preview.innerHTML = '<i class="bi bi-magic me-2 text-primary"></i><span class="text-muted">Invalid month</span>';
+            return;
+        }
+
+        const totalIndex = (year * 12 + (month - 1)) + (duration - 1);
+        const endYear = Math.floor(totalIndex / 12);
+        const endMonth = (totalIndex % 12) + 1;
+
+        preview.innerHTML =
+            '<i class="bi bi-magic me-2 text-primary"></i>' +
+            '<span class="fw-semibold">' + MONTH_NAMES[endMonth - 1] + ' ' + endYear + '</span>' +
+            ' <span class="text-muted text-small ms-1">(' + duration + ' months)</span>';
+    }
+
+    courseInput.addEventListener('change', calculateEndMonth);
+    startInput.addEventListener('input', calculateEndMonth);
+    startInput.addEventListener('blur', calculateEndMonth);
+    calculateEndMonth();
+});
+</script>
+{% endblock %}

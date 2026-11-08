@@ -1,0 +1,255 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Correction #{{ correction.pk }} — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title=page_title description=page_subtitle %}
+
+<div class="row g-3">
+
+    <div class="col-lg-8">
+        
+        {# ---------- Original vs Corrected Comparison ---------- #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <div class="app-card-header-left">
+                    <h3 class="app-card-title">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Requested Changes (Comparison)</span>
+                    </h3>
+                </div>
+                <div class="app-card-header-right">
+                    {% if correction.status == 'pending' %}
+                        <span class="badge-status badge-warning">Pending</span>
+                    {% elif correction.status == 'approved' %}
+                        <span class="badge-status badge-success">Approved</span>
+                    {% elif correction.status == 'rejected' %}
+                        <span class="badge-status badge-danger">Rejected</span>
+                    {% else %}
+                        <span class="badge-status badge-secondary">Cancelled</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="app-card-body p-0">
+                <table class="table app-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th class="text-center">Original Value</th>
+                            <th class="text-center">Corrected Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if correction.correction_type == 'amount_change' %}
+                            <tr>
+                                <td class="fw-semibold">Amount</td>
+                                <td class="text-center text-muted text-decoration-line-through">
+                                    Rs. {{ correction.payment.amount|floatformat:2 }}
+                                </td>
+                                <td class="text-center text-success fw-bold">
+                                    Rs. {{ correction.new_amount|floatformat:2 }}
+                                </td>
+                            </tr>
+                        
+                        {% elif correction.correction_type == 'method_change' %}
+                            <tr>
+                                <td class="fw-semibold">Payment Method</td>
+                                <td class="text-center text-muted text-decoration-line-through">
+                                    {{ correction.payment.get_payment_method_display }}
+                                </td>
+                                <td class="text-center text-success fw-bold">
+                                    {{ correction.get_new_payment_method_display }}
+                                </td>
+                            </tr>
+
+                        {% elif correction.correction_type == 'date_change' %}
+                            <tr>
+                                <td class="fw-semibold">Payment Date</td>
+                                <td class="text-center text-muted text-decoration-line-through">
+                                    {{ correction.payment.payment_date|date:"d M Y · H:i" }}
+                                </td>
+                                <td class="text-center text-success fw-bold">
+                                    {{ correction.new_payment_date|date:"d M Y · H:i" }}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# ---------- Reason & Notes ---------- #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-chat-left-text"></i> Reason for Correction</h3>
+            </div>
+            <div class="app-card-body">
+                <div class="callout callout-warning mb-0">
+                    <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+                    <div class="callout-body">
+                        <strong>Requested By:</strong> {{ correction.requested_by.get_full_name }}<br>
+                        <strong>Date:</strong> {{ correction.created_at|date:"d M Y · H:i" }}<br><br>
+                        "{{ correction.reason }}"
+                    </div>
+                </div>
+                {% if correction.notes %}
+                    <div class="mt-3">
+                        <div class="text-label">Additional Notes</div>
+                        <p class="mb-0">{{ correction.notes }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ---------- Original Payment Details ---------- #}
+        <div class="app-card mb-3">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-receipt"></i> Original Payment</h3>
+                <div class="app-card-header-right">
+                    {% if correction.payment.is_reversed %}
+                        <span class="badge-status badge-danger">Reversed</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="app-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-label">Student</div>
+                        <div class="fw-bold">{{ correction.payment.obligation.student.student_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-label">Transaction ID</div>
+                        <div class="fw-bold" style="font-family: monospace;">{{ correction.payment.transaction_id }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-label">Amount</div>
+                        <div class="fw-bold">Rs. {{ correction.payment.amount }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-label">Method</div>
+                        <div class="fw-bold">{{ correction.payment.get_payment_method_display }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-label">Date</div>
+                        <div class="fw-bold">{{ correction.payment.payment_date|date:"d M Y" }}</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'fees:receipt' correction.payment.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>View Original Receipt
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {# ---------- Review Section (Principal only) ---------- #}
+        {% if correction.status == 'pending' and is_principal %}
+            <div class="app-card mb-3">
+                <div class="app-card-header">
+                    <h3 class="app-card-title"><i class="bi bi-clipboard-check"></i> Principal Review</h3>
+                </div>
+                <div class="app-card-body">
+                    <form method="post" action="{% url 'fees:review_correction' correction.pk %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Decision</label>
+                            <div class="d-flex gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="decision" value="approve" id="decision_approve" required>
+                                    <label class="form-check-label text-success fw-bold" for="decision_approve">
+                                        <i class="bi bi-check-circle me-1"></i> Approve
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="decision" value="reject" id="decision_reject" required>
+                                    <label class="form-check-label text-danger fw-bold" for="decision_reject">
+                                        <i class="bi bi-x-circle me-1"></i> Reject
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Review Notes</label>
+                            <textarea name="review_notes" class="form-control" rows="3" required placeholder="Approval ya rejection ka reason likhein..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-lg me-1"></i>Submit Decision
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        {# ---------- Review Outcome (if reviewed) ---------- #}
+        {% if correction.status != 'pending' %}
+            <div class="app-card">
+                <div class="app-card-header">
+                    <h3 class="app-card-title"><i class="bi bi-info-circle"></i> Review Outcome</h3>
+                </div>
+                <div class="app-card-body">
+                    <div class="kv-row">
+                        <span class="kv-label">Reviewed By</span>
+                        <span class="kv-value">{{ correction.reviewed_by.get_full_name }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-label">Reviewed At</span>
+                        <span class="kv-value">{{ correction.reviewed_at|date:"d M Y · H:i" }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-label">Notes</span>
+                        <span class="kv-value">{{ correction.review_notes|default:"—" }}</span>
+                    </div>
+                    
+                    {% if correction.status == 'approved' and correction.replacement_payment %}
+                        <div class="callout callout-success mt-3 mb-0">
+                            <div class="callout-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="callout-body">
+                                <strong>Replacement Payment Created:</strong><br>
+                                <a href="{% url 'fees:receipt' correction.replacement_payment.pk %}" target="_blank">
+                                    {{ correction.replacement_payment.transaction_id }} — Rs. {{ correction.replacement_payment.amount }}
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {# ---------- Sidebar Actions ---------- #}
+    <div class="col-lg-4">
+        <div class="app-card">
+            <div class="app-card-header">
+                <h3 class="app-card-title"><i class="bi bi-gear"></i> Actions</h3>
+            </div>
+            <div class="app-card-body d-flex flex-column gap-2">
+                <a href="{% url 'fees:corrections_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                </a>
+                <a href="{% url 'students:detail' correction.payment.obligation.student.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-person me-1"></i>View Student
+                </a>
+                <a href="{% url 'fees:student_ledger' correction.payment.obligation.student.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-receipt me-1"></i>View Student Ledger
+                </a>
+            </div>
+        </div>
+
+        <div class="callout callout-info mt-3">
+            <div class="callout-icon"><i class="bi bi-info-circle-fill"></i></div>
+            <div class="callout-body">
+                <span class="callout-title">How It Works</span>
+                Approving this correction will reverse the original payment and create a fresh replacement payment with corrected values. Both records are preserved for audit.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Payment Corrections — EASYTECH THATTA{% endblock %}
+
+{% block content %}
+
+{# ---------- Page Header ---------- #}
+{% include 'base/partials/page-header.html' with title="Payment Corrections" description=page_subtitle %}
+
+{% if is_principal and pending_count > 0 %}
+    <div class="callout callout-warning mb-3">
+        <div class="callout-icon"><i class="bi bi-bell-fill"></i></div>
+        <div class="callout-body">
+            <span class="callout-title">{{ pending_count }} pending correction{{ pending_count|pluralize }} awaiting your review</span>
+            <a href="?status=pending" class="fw-semibold">View pending →</a>
+        </div>
+    </div>
+{% endif %}
+
+{# ---------- Status Tabs ---------- #}
+<div class="badge-group mb-3">
+    <a href="?status=all" class="badge-tab {% if not status_filter or status_filter == 'all' %}active{% endif %}">
+        All
+    </a>
+    {% for val, label in status_choices %}
+        <a href="?status={{ val }}" class="badge-tab {% if status_filter == val %}active{% endif %}">
+            {{ label }}
+        </a>
+    {% endfor %}
+</div>
+
+{# ---------- Table ---------- #}
+<div class="app-card">
+    <div class="app-card-body p-0">
+        {% if corrections %}
+            <div class="table-responsive">
+                <table class="table app-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">#</th>
+                            <th>Payment</th>
+                            <th>Type</th>
+                            <th>Requested By</th>
+                            <th>Reason</th>
+                            <th style="width: 130px;">Submitted</th>
+                            <th style="width: 110px;">Status</th>
+                            <th class="text-end" style="width: 100px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in corrections %}
+                            <tr>
+                                <td><span class="fw-semibold">#{{ c.pk }}</span></td>
+                                <td>
+                                    <div class="text-small fw-semibold">{{ c.payment.obligation.student.student_name }}</div>
+                                    <div class="text-tiny text-muted" style="font-family: monospace;">
+                                        {{ c.payment.transaction_id }}
+                                    </div>
+                                    <div class="text-tiny text-muted">
+                                        Rs. {{ c.payment.amount|floatformat:2 }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                                        {{ c.get_correction_type_display }}
+                                    </span>
+                                </td>
+                                <td><span class="text-small">{{ c.requested_by.get_full_name }}</span></td>
+                                <td>
+                                    <span class="text-small text-muted">{{ c.reason|truncatechars:50 }}</span>
+                                </td>
+                                <td><span class="text-small">{{ c.created_at|date:"d M · H:i" }}</span></td>
+                                <td>
+                                    {% if c.status == 'pending' %}
+                                        <span class="badge-status badge-warning">Pending</span>
+                                    {% elif c.status == 'approved' %}
+                                        <span class="badge-status badge-success">Approved</span>
+                                    {% elif c.status == 'rejected' %}
+                                        <span class="badge-status badge-danger">Rejected</span>
+                                    {% elif c.status == 'cancelled' %}
+                                        <span class="badge-status badge-secondary">Cancelled</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'fees:correction_detail' c.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% include 'base/partials/empty-state.html' with icon="tools" title="No correction requests" message="Jab bhi koi payment correction ki zaroorat ho, yahan se request submit karein." %}
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

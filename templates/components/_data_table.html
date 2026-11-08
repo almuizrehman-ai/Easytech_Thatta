@@ -1,0 +1,112 @@
+{% comment %}
+Reusable data table component.
+
+Context parameters:
+  headers       : list of strings    — column headings (required)
+                    Example: ['Name', 'Course', 'Batch', 'Status', 'Actions']
+  rows          : list of dicts      — each row is a dict keyed by column order OR by semantic keys.
+                    Recommended shape:
+                    [
+                        {
+                            'cells': [   # list of raw HTML per column (use |safe via caller)
+                                '<strong>Ali Khan</strong>',
+                                'DIT',
+                                'DIT Mar 2027',
+                                '<span class="badge badge-status badge-success">Paid</span>',
+                                '<a href="/students/1/" class="btn btn-sm btn-outline-primary">View</a>'
+                            ],
+                            'row_url': '/students/1/',   # optional, makes row clickable
+                            'row_class': '',             # optional, e.g. 'table-warning'
+                        },
+                        ...
+                    ]
+  empty_icon    : string  — Icon for empty state (default: 'inbox')
+  empty_title   : string  — Empty state title (default: 'No records found')
+  empty_message : string  — Empty state message
+  empty_action_url   : string  — Optional CTA URL
+  empty_action_label : string  — Optional CTA label
+  loading       : bool    — If true, shows skeleton rows instead of data
+  skeleton_rows : int     — Number of skeleton rows (default: 6)
+  striped       : bool    — Adds zebra striping (default: false)
+  hover         : bool    — Adds row hover effect (default: true)
+  compact       : bool    — Smaller padding (default: false)
+
+Rendering priority:
+  1. If loading=True       -> skeleton rows
+  2. Else if rows empty    -> empty state
+  3. Else                  -> data rows
+
+Important:
+  - All cell content is rendered with `|safe` because callers pass pre-escaped HTML.
+    Ensure all user-supplied text is escaped BEFORE being placed inside a cell HTML string.
+  - Use Django's `conditional_escape()` or the `escape` template filter when building
+    cell HTML strings in views.
+
+Usage example (view):
+  rows = [{
+      'cells': [
+          f'<strong>{escape(s.student_name)}</strong>',
+          escape(s.course.name),
+          f'<a href="{s.get_absolute_url()}" class="btn btn-sm btn-outline-primary">View</a>',
+      ]
+  } for s in students]
+  context['rows'] = rows
+  context['headers'] = ['Student', 'Course', 'Actions']
+{% endcomment %}
+<div class="app-table-wrapper">
+
+    {% if loading %}
+        <div class="table-responsive">
+            <table class="table app-table {% if compact %}table-compact{% endif %}">
+                <thead>
+                    <tr>
+                        {% for h in headers %}
+                            <th>{{ h }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for _ in ""|center:skeleton_rows|default:"123456" %}
+                        <tr class="table-skeleton">
+                            {% for h in headers %}
+                                <td><div class="skeleton-line"></div></td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% elif rows %}
+        <div class="table-responsive">
+            <table class="table app-table
+                          {% if striped %}table-striped{% endif %}
+                          {% if hover %}table-hover{% endif %}
+                          {% if compact %}table-compact{% endif %}">
+                <thead>
+                    <tr>
+                        {% for h in headers %}
+                            <th>{{ h }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr class="{{ row.row_class|default:'' }}"
+                            {% if row.row_url %}data-row-url="{{ row.row_url }}"{% endif %}>
+                            {% for cell in row.cells %}
+                                <td>{{ cell|safe }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        <div class="table-empty">
+            {% include 'base/partials/empty-state.html' with icon=empty_icon|default:'inbox' title=empty_title|default:'No records found' message=empty_message action_url=empty_action_url action_label=empty_action_label only %}
+        </div>
+    {% endif %}
+
+</div>
